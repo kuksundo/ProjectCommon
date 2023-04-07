@@ -7,14 +7,20 @@ uses
   ComObj, Vcl.Dialogs, PowerPoint2010, Office2010;
 
 type
-   TPPTReplaceFlags = set of (pptrfReplaceAll, pptrfMatchCase, pptrfMatchWildcards);
+  TPPTReplaceFlags = set of (pptrfReplaceAll, pptrfMatchCase, pptrfMatchWildcards);
+
+const
+  PPTSlideHeight_A4 = 540;
+  PPTSlideWidth_A4 = 780;
 
 function GetActiveMSPPTOleObject(ADocument: TFileName; AVisible: boolean=True) : Variant;
 function GetActiveMSPPTClass(AFileName: TFileName; AVisible: boolean) : PowerPointApplication;
 function PPT_StringReplace(PPTApp: PowerPointApplication; SearchString, ReplaceString: string;
   Flags: TPPTReplaceFlags=[]): Boolean;
-procedure PPT_InsertImageToPPTFromClipboard(APPTApp: PowerPointApplication);
-procedure PPT_InsertImageToSlideFromClipboard(ASlide: PowerPointSlide; ASlideHeight, ASlideWidth: single);
+procedure PPT_InsertImageToPPTFromClipboard(APPTApp: PowerPointApplication;
+  ASlideNo: integer; AImgHeight, AImgWidth, AImgTop, AImgLeft: single);
+procedure PPT_InsertImageToSlideFromClipboard(ASlide: PowerPointSlide; ASlideHeight, ASlideWidth,
+  AImgHeight, AImgWidth, AImgTop, AImgLeft: single);
 procedure PPT_InsertImageToShapeFromClipboard(AShape: PowerPoint2010.Shape);
 
 implementation
@@ -118,7 +124,8 @@ begin
   end;
 end;
 
-procedure PPT_InsertImageToPPTFromClipboard(APPTApp: PowerPointApplication);
+procedure PPT_InsertImageToPPTFromClipboard(APPTApp: PowerPointApplication;
+  ASlideNo: integer; AImgHeight, AImgWidth, AImgTop, AImgLeft: single);
 var
   LPPtPresentation: PowerPointPresentation;
   LSlide: PowerPointSlide;
@@ -128,20 +135,26 @@ begin
   LSlideHeight := LPPtPresentation.PageSetup.SlideHeight;
   LSlideWidth := LPPtPresentation.PageSetup.SlideWidth;
 
-  LSlide := LPPtPresentation.Slides.Item(1);
+  //첫번쨰 Slide 가져옴
+  LSlide := LPPtPresentation.Slides.Item(ASlideNo);//(1);
 
-  PPT_InsertImageToSlideFromClipboard(LSlide, LSlideHeight, LSlideWidth);
+  PPT_InsertImageToSlideFromClipboard(LSlide, LSlideHeight, LSlideWidth, AImgHeight, AImgWidth, AImgTop, AImgLeft);
 end;
 
-procedure PPT_InsertImageToSlideFromClipboard(ASlide: PowerPointSlide; ASlideHeight, ASlideWidth: single);
+procedure PPT_InsertImageToSlideFromClipboard(ASlide: PowerPointSlide; ASlideHeight, ASlideWidth,
+  AImgHeight, AImgWidth, AImgTop, AImgLeft: single);
 var
   LShapeRange: PowerPoint2010.ShapeRange;
 begin
+  //Clipboard 내용을 Slikde에 붙여넣기 함(Shape가 자동 생성됨)
   LShapeRange := ASlide.Shapes.Paste;
-  LShapeRange.Height := 60.0;
-  LShapeRange.Width := 60.0;
-  LShapeRange.Top := ASlideHeight - (LShapeRange.Height * 2);
-  LShapeRange.Left := ASlideWidth - (LShapeRange.Width * 2);
+  //위에서 복사한 Shape 크기 및 위치 조정
+  LShapeRange.Height := AImgHeight;//60.0;
+  LShapeRange.Width := AImgWidth;//60.0;
+  LShapeRange.Top := AImgTop;
+  LShapeRange.Left := AImgLeft;
+//  LShapeRange.Top := ASlideHeight - (LShapeRange.Height * 2);
+//  LShapeRange.Left := ASlideWidth - (LShapeRange.Width * 2);
 end;
 
 procedure PPT_InsertImageToShapeFromClipboard(AShape: PowerPoint2010.Shape);
