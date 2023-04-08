@@ -188,6 +188,8 @@ function TLabelledEnum<T>.ToEnumString(AType: integer): string;
 //var
 //  LEnumGeneric: TEnumGeneric<T>;
 begin
+  Result := '';
+
   if IndexInRange(AType) then
     Result := GetEnumName(TypeInfo(T), AType);
 end;
@@ -201,6 +203,8 @@ end;
 
 function TLabelledEnum<T>.ToString(AType: integer): string;
 begin
+  Result := '';
+
   if IndexInRange(AType) then
     Result := R_[AType].Description;
 end;
@@ -210,6 +214,8 @@ var
   LEnumGeneric: TEnumGeneric<T>;
   i: integer;
 begin
+  Result := '';
+
   i := LEnumGeneric.Ord(AType);
 
   if IndexInRange(i) then
