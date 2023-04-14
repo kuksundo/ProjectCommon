@@ -55,10 +55,27 @@ procedure ObjectCopyWithRtti(const ASrc: TObject; var ADest: TObject);
 procedure CreatePersistentAssignFile(const ASrc: TPersistent; AFileName: string);
 function GetVariantFromProperty(const AClass: TObject; AIsPadFirstChar: Boolean=False; AIsPropertyOnly: Boolean=False): Variant;
 //procedure LoadRecordPropertyFromVariant2(ARecType: TypeInfo; const ADoc: Variant);
-function GetPropertyNameValueList(AObj: TObject): TStringList;
+function GetPropertyNameValueList(AObj: TObject; AIsOnlyPublished: Boolean=False): TStringList;
+function GetPropertyCount(AObj: TObject; AIsOnlyPublished: Boolean=False): integer;
 procedure LoadRecordFieldFromVariant(ATypeInfo, ARecPointer: Pointer; const ADoc: Variant; AIsPadFirstChar: Boolean=False);
 function FindNSetCompValue(AParentControl: TComponent; const ACompName, APropName, AValue: string): Boolean;
 function FindNGetCompStringValue(AParentControl: TComponent; ACompName, APropName: string): string;
+
+function ExecuteMethodByClass(AClass : TClass; AMethodName : String; const AArgs: Array of TValue) : TValue;
+//ex)
+//procedure TestMethod(const value: string);
+//.....
+//var
+//  LStr: string;
+//  tv: array of TValue;
+//begin
+//  LStr := 'hello';
+//  //SOInvoke(Self, 'TestMethod', SO('{value: "hello"}'));
+//  SetLength(tv,1);
+//  tv[0] := TValue.From(LStr);
+//  ExecuteMethodByObject(Self, 'TestMethod', tv);
+//}
+function ExecuteMethodByObject(AObj : TObject; AMethodName : String; const AArgs: Array of TValue) : TValue;
 
 implementation
 
@@ -675,6 +692,8 @@ var
  LStrList: TStringList;
 begin
   LStrList := TStringList.Create;
+  LStrList.Add('//***This file is created auto by UnitRttiUtil.CreatePersistentAssignFile() ***' + #13#10);
+
   ctx := TRttiContext.Create;
   try
     objType := ctx.GetType(ASrc.ClassInfo);
@@ -688,7 +707,7 @@ begin
         Continue;
 
       LPropName := Prop.Name;
-      Data := LPropName + ' := TEngineParameterItem(Source).' + LPropName + ';';
+      Data := LPropName + ' := ' + ASrc.ClassName + '(Source).' + LPropName + ';';    // TEngineParameterItem
       LStrList.Add(Data);
     end;
 
@@ -914,7 +933,7 @@ begin
   LoadRecordPropertyToVariant(AClass, Result, AIsPadFirstChar, AIsPropertyOnly);
 end;
 
-function GetPropertyNameValueList(AObj: TObject): TStringList;
+function GetPropertyNameValueList(AObj: TObject; AIsOnlyPublished: Boolean): TStringList;
 var //Name=Value로 반환함
   ctx: TRttiContext;
   rt: TRttiType;
@@ -928,7 +947,33 @@ begin
 
     for prop in rt.GetProperties do
     begin
+      if (AIsOnlyPublished) and (Prop.Visibility <> mvPublished) then
+        Continue;
+
       Result.Add(prop.Name + '=' + prop.GetValue(AObj).ToString);
+    end;
+  finally
+    ctx.Free;
+  end;
+end;
+
+function GetPropertyCount(AObj: TObject; AIsOnlyPublished: Boolean=False): integer;
+var
+  ctx: TRttiContext;
+  rt: TRttiType;
+  Prop: TRttiProperty;
+begin
+  Result := 0;
+  ctx := TRttiContext.Create;
+  try
+    rt := ctx.GetType(AObj.ClassType);
+
+    for prop in rt.GetProperties do
+    begin
+      if (AIsOnlyPublished) and (Prop.Visibility <> mvPublished) then
+        Continue;
+
+      Inc(Result);
     end;
   finally
     ctx.Free;
@@ -977,6 +1022,41 @@ begin
   begin
     LValue := GetValue3(TObject(LComp), APropName);
     Result := GetValue(LValue);
+  end;
+end;
+
+function ExecuteMethodByClass(AClass : TClass; AMethodName : String; const AArgs: Array of TValue) : TValue;
+var
+//  RttiContext : TRttiContext;
+//  RttiMethod  : TRttiMethod;
+//  RttiType    : TRttiType;
+  RttiObject  : TObject;
+begin
+  RttiObject := AClass.Create;
+  try
+    Result := ExecuteMethodByObject(RttiObject, AMethodName, AArgs);
+//    RttiContext := TRttiContext.Create;
+//    RttiType    := RttiContext.GetType(AClass);
+//    RttiMethod  := RttiType.GetMethod(AMethodName);
+//    Result      := RttiMethod.Invoke(RttiObject,AArgs);
+  finally
+    RttiObject.Free;
+  end;
+end;
+
+//AArgs := TValue.From();
+function ExecuteMethodByObject(AObj : TObject; AMethodName : String; const AArgs: Array of TValue) : TValue;
+var
+  RttiContext : TRttiContext;
+  RttiMethod  : TRttiMethod;
+  RttiType    : TRttiType;
+begin
+  if Assigned(AObj) then
+  begin
+    RttiContext := TRttiContext.Create;
+    RttiType    := RttiContext.GetType(AObj.ClassType);
+    RttiMethod  := RttiType.GetMethod(AMethodName);
+    Result      := RttiMethod.Invoke(AObj,AArgs);
   end;
 end;
 
