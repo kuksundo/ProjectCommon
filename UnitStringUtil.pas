@@ -40,6 +40,10 @@ procedure TrimLeftRightChar(var S: String; Seperator: Char);
 function replaceString(str,s1,s2:string;casesensitive:boolean=false):string;
 procedure TrimRightCharPos(var S: String; Seperator: Char);
 function RemoveSpaceBetweenStrings(const AStr: string): string;
+//대문자 단위로 문자를 반환함
+function StrTokenUpcase(var S: String): string;
+function PosUpcase(const S: String): integer;
+function InsertCharAtUpcase(const S: string; Seperator: Char): string;
 
 function NewGUID: string;
 function FormatByteString(Bytes: UInt64; Format: TByteStringFormat = bsfDefault): string;
@@ -453,6 +457,57 @@ end;
 function RemoveSpaceBetweenStrings(const AStr: string): string;
 begin
   replaceString(AStr, ' ', '');
+end;
+
+function StrTokenUpcase(var S: String): string;
+var
+  i: integer;
+begin
+  i := PosUpcase(S);
+
+  if i > 0 then
+  begin
+    Result:=System.Copy(S,1,I-1);
+    System.Delete(S,1,I);
+  end else
+  begin
+    Result:=S;
+    S:='';
+  end;
+end;
+
+function PosUpcase(const S: String): integer;
+var
+  i: integer;
+begin
+  Result := 0;
+
+  for i := 1 to Length(s) do
+  begin
+    if S[i] = UpCase(S[i]) then
+    begin
+      Result := i;
+      break;
+    end;
+  end;
+end;
+
+function InsertCharAtUpcase(const S: string; Seperator: Char): string;
+var
+  LStr, LStr2: string;
+begin
+  Result := '';
+  LStr := S;
+
+  while True do
+  begin
+    LStr2 := StrTokenUpcase(LStr);
+
+    if LStr2 = '' then
+      break;
+
+    Result := Result + LStr2 + Seperator;
+  end;
 end;
 
 function IntToDot3Digit(AInt: integer): string;
