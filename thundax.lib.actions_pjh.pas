@@ -43,18 +43,25 @@ type
   TActionType = (atNull, atMousePos, atMouseLClick, atMouseLDClick, atMouseRClick, atMouseRDClick, atKey,
     atMessage, atWait, atMessage_Dyn, atExecuteFunc, atMouseDrag, atDragBegin, atDragEnd);
 
+  //emSWEvent : mouse_event 함수 사용
+  //emDriver : Interception Device Driver 사용
+  //emHardware : Arduino Leonardo 사용
+  TExecuteMode = (emSWEvent, emDriver, emHardware);
+
   TActionTypeHelper = class(TObject)
     class function CastToString(action: TActionType): string;
     class function GetActionTypeFromDesc(description: string): TActionType;
   end;
 
   IAction = interface
-    procedure Execute(ANotUseLerpWithMove: Boolean=False);
+    procedure Execute(AExecMode: TExecuteMode=emSWEvent; ANotUseLerpWithMove: Boolean=False);
     function ToString(AIsCustom: Boolean=False): string;
     function GetActionType: TActionType;
+    function GetExecMode: TExecuteMode;
     function GetVKExtendKey: integer;
     procedure SetVKExtendKey(AVK: integer);
     procedure SetVKAction(AVKAction: integer);
+    procedure SetExecMode(AExecMode: TExecuteMode);
   end;
 
   TParameters<T> = class(TObject)
@@ -77,6 +84,7 @@ type
   private
     Fparam: TParameters<T>;
     Faction: TActionType;
+    FExecMode: TExecuteMode;
     FCustomDesc: string;
     FVKExtendKey,//Mouse Drag시 누른 확장 KeyCode 저장
     FVKAction //1: VKExtendKey Down, 2: VKExtendKey Up
@@ -91,17 +99,23 @@ type
     procedure ExcuteKeyUp(AVKeyCode: integer);
   public
     property action: TActionType read Faction write Setaction;
+    property ExecMode: TExecuteMode read FExecMode write FExecMode;
     property param: TParameters<T>read Fparam write Setparam;
     property CustomDesc: string read FCustomDesc write FCustomDesc;
     property VKExtendKey: integer read FVKExtendKey write FVKExtendKey;
 
     constructor Create(action: TActionType; param: TParameters<T>; ACustomDesc: string='');
-    procedure Execute(ANotUseLerpWithMove: Boolean=False);
+    procedure Execute(AExecMode: TExecuteMode=emSWEvent; ANotUseLerpWithMove: Boolean=False);
+    procedure ExecuteSWEvent(ANotUseLerpWithMove: Boolean);
+    procedure ExecuteDriver();
+    Procedure ExecuteHardware();
     function ToString(AIsCustom: Boolean=False): string;
     function GetActionType: TActionType;
+    function GetExecMode: TExecuteMode;
     function GetVKExtendKey: integer;
     procedure SetVKExtendKey(AVK: integer);
     procedure SetVKAction(AVKAction: integer);
+    procedure SetExecMode(AExecMode: TExecuteMode);
   end;
 
   TActionList = class(TList<IAction>)
@@ -214,7 +228,57 @@ begin
   keybd_event(AVKeyCode, ScanCode, KEYEVENTF_EXTENDEDKEY or KEYEVENTF_KEYUP,0);
 end;
 
-procedure TAction<T>.Execute(ANotUseLerpWithMove: Boolean);
+procedure TAction<T>.Execute(AExecMode: TExecuteMode; ANotUseLerpWithMove: Boolean);
+begin
+//  if AExecMode = emSetMode then
+//    AExecMode := FExecMode;
+
+  case AExecMode of
+    emSWEvent: ExecuteSWEvent(ANotUseLerpWithMove);
+    emDriver: ExecuteDriver();
+    emHardware: ExecuteHardware();
+  end;
+end;
+
+procedure TAction<T>.ExecuteDriver;
+begin
+end;
+
+procedure TAction<T>.ExecuteHardware;
+begin
+  case Faction of
+    atMouseLClick:
+      begin
+      end;
+    atMouseLDClick:
+      begin
+        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+        Sleep(10);
+        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+        Sleep(50);//GetDoubleClickTime;
+        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+        Sleep(10);
+        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+      end;
+    atMouseRClick:
+      begin
+        mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
+        mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
+      end;
+    atMouseRDClick:
+      begin
+        mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
+        Sleep(10);
+        mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
+        Sleep(50);//GetDoubleClickTime;
+        mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
+        Sleep(10);
+        mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
+      end;
+  end;
+end;
+
+procedure TAction<T>.ExecuteSWEvent(ANotUseLerpWithMove: Boolean);
 var
   p: Integer;
   LMsg: string;
@@ -321,6 +385,11 @@ end;
 function TAction<T>.GetActionType: TActionType;
 begin
   Result := Faction;
+end;
+
+function TAction<T>.GetExecMode: TExecuteMode;
+begin
+  Result := FExecMode;
 end;
 
 function TAction<T>.getKey(key: String): Char;
@@ -490,6 +559,11 @@ end;
 procedure TAction<T>.Setaction(const Value: TActionType);
 begin
   Faction := Value;
+end;
+
+procedure TAction<T>.SetExecMode(AExecMode: TExecuteMode);
+begin
+  FExecMode := AExecMode;
 end;
 
 procedure TAction<T>.Setparam(const Value: TParameters<T>);
