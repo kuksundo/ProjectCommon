@@ -7,6 +7,7 @@ uses
 
 procedure MouseLock(AForm: TForm; var AMouseLock: Boolean; AIsLock: Boolean);
 procedure MoveMouse(X,Y,Speed: Integer);
+function GetMouseFlagFromType(AType: Cardinal): Cardinal;
 
 implementation
 
@@ -69,6 +70,47 @@ begin
   end;
 
   mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+end;
+
+function GetMouseFlagFromType(AType: Cardinal): Cardinal;
+begin
+  if (AType = WM_LBUTTONDOWN) or (AType = WM_LBUTTONDBLCLK) then
+  begin
+    Result := MOUSEEVENTF_LEFTDOWN;
+  end
+  else if (AType = WM_RBUTTONDOWN) or (AType = WM_RBUTTONDBLCLK) then
+  begin
+    Result := MOUSEEVENTF_RIGHTDOWN
+  end
+  else if (AType = WM_MBUTTONDOWN) or (AType = WM_MBUTTONDBLCLK) then
+  begin
+    Result := MOUSEEVENTF_MIDDLEDOWN
+  end
+  else if (AType = WM_MBUTTONDOWN) or (AType = WM_MBUTTONDBLCLK) then
+  begin
+    Result := MOUSEEVENTF_MIDDLEDOWN;
+  end
+  else if (AType = WM_LBUTTONUP) then
+  begin
+    Result := MOUSEEVENTF_LEFTUP;
+  end
+  else if (AType = WM_RBUTTONUP) then
+  begin
+    Result := MOUSEEVENTF_RIGHTUP;
+  end
+  else if (AType = WM_MBUTTONUP) then
+  begin
+    Result := MOUSEEVENTF_MIDDLEUP;
+  end
+  else if (AType = WM_MOUSEWHEEL) then
+  begin
+    Result := MOUSEEVENTF_WHEEL;
+  end
+  else if (AType = WM_MOUSEMOVE) then
+  begin
+    Result := MOUSEEVENTF_MOVE + MOUSEEVENTF_ABSOLUTE;
+  end
+
 end;
 
 end.
