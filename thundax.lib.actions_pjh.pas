@@ -41,7 +41,8 @@ type
   TExecuteFunction = procedure(AFuncName: string) of object;
 
   TActionType = (atNull, atMousePos, atMouseLClick, atMouseLDClick, atMouseRClick, atMouseRDClick, atKey,
-    atMessage, atWait, atMessage_Dyn, atExecuteFunc, atMouseDrag, atDragBegin, atDragEnd);
+    atMessage, atWait, atMessage_Dyn, atExecuteFunc, atMouseDrag, atDragBegin, atDragEnd,
+    atMouseLDown, atMouseLUp, atMouseRDown, atMouseRUp, atMouseMDown, atMouseMUp);
 
   //emSWEvent : mouse_event 함수 사용
   //emDriver : Interception Device Driver 사용
@@ -51,6 +52,7 @@ type
   TActionTypeHelper = class(TObject)
     class function CastToString(action: TActionType): string;
     class function GetActionTypeFromDesc(description: string): TActionType;
+    class function GetActionCodeFromInputFlags(AInputFlags: LongWord): string;
   end;
 
   IAction = interface
@@ -252,29 +254,19 @@ begin
       end;
     atMouseLDClick:
       begin
-        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-        Sleep(10);
-        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-        Sleep(50);//GetDoubleClickTime;
-        mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
-        Sleep(10);
-        mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
       end;
     atMouseRClick:
       begin
-        mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
-        mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
       end;
     atMouseRDClick:
       begin
-        mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
-        Sleep(10);
-        mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
-        Sleep(50);//GetDoubleClickTime;
-        mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
-        Sleep(10);
-        mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
       end;
+    atMouseLDown:;
+    atMouseLUp:;
+    atMouseRDown:;
+    atMouseRUp:;
+    atMouseMDown:;
+    atMouseMUp:;
   end;
 end;
 
@@ -316,6 +308,12 @@ begin
         Sleep(10);
         mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
       end;
+    atMouseLDown: mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+    atMouseLUp: mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+    atMouseRDown: mouse_event(MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
+    atMouseRUp: mouse_event(MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
+    atMouseMDown: mouse_event(MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, 0);
+    atMouseMUp: mouse_event(MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0);
     atKey:
 //      TypeMessage(getKey(param.StringConverterP1));
       TypeMessageUsingSendKey(param.StringConverterP1);
@@ -596,6 +594,12 @@ begin
       Result := 'Mouse Right Click';
     atMouseRDClick:
       Result := 'Mouse Right Double Click';
+    atMouseLDown: Result := 'Mouse Left Down';
+    atMouseLUp: Result := 'Mouse Left Up';
+    atMouseRDown: Result := 'Mouse Right Down';
+    atMouseRUp: Result := 'Mouse Right Up';
+    atMouseMDown: Result := 'Mouse Middle Down';
+    atMouseMUp: Result := 'Mouse Middle Up';
     atKey:
       Result := 'Press special key';
     atMessage:
@@ -612,6 +616,22 @@ begin
       Result := 'Drag Begin';
     atDragEnd:
       Result := 'Drag End';
+  end;
+end;
+
+class function TActionTypeHelper.GetActionCodeFromInputFlags(
+  AInputFlags: LongWord): string;
+begin
+  case AInputFlags of
+    MOUSEEVENTF_LEFTDOWN: Result := 'Mouse Left Down';
+    MOUSEEVENTF_LEFTUP: Result := 'Mouse Left Up';
+    MOUSEEVENTF_RIGHTDOWN: Result := 'Mouse Right Down';
+    MOUSEEVENTF_RIGHTUP: Result := 'Mouse Right Up';
+    MOUSEEVENTF_MOVE,
+    MOUSEEVENTF_ABSOLUTE,
+   (MOUSEEVENTF_MOVE or MOUSEEVENTF_ABSOLUTE),
+   //MOUSEEVENTF_VIRTUALDESK = $4000 : SendInputHelper.pas에서 정의됨
+   (MOUSEEVENTF_MOVE or MOUSEEVENTF_ABSOLUTE or $4000): Result := 'Mouse position';
   end;
 end;
 
@@ -632,6 +652,24 @@ begin
   else
   if description = 'Mouse Right Double Click' then
     result := atMouseRDClick
+  else
+  if description = 'Mouse Left Down' then
+    result := atMouseLDown
+  else
+  if description = 'Mouse Left Up' then
+    result := atMouseLUp
+  else
+  if description = 'Mouse Right Down' then
+    result := atMouseRDown
+  else
+  if description = 'Mouse Right Up' then
+    result := atMouseRUp
+  else
+  if description = 'Mouse Middle Down' then
+    result := atMouseMDown
+  else
+  if description = 'Mouse Middle Up' then
+    result := atMouseMUp
   else
   if description = 'Press special key' then
     result := atKey
