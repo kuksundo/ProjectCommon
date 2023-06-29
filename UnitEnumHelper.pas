@@ -64,6 +64,7 @@ Type
     procedure SetType2List(AList: TStrings);
     function IndexInRange(AIndex: integer): Boolean;
     function IsExistStrInArray(AStr: string): Boolean;
+    function ToTypeFromSubString(AType: string): T;
   End;
 
 //function SetToInt(const ASet; const ASize: integer): integer;
@@ -241,6 +242,22 @@ begin
     i := 0;
 
   Result := LEnumGeneric.Cast(i);
+end;
+
+function TLabelledEnum<T>.ToTypeFromSubString(AType: string): T;
+var
+  LLength, i: integer;
+begin
+  LLength := Length(R_);
+
+  for i := 0 to LLength - 1 do
+  begin
+    if Pos(R_[i].Description, AType) > 0then
+    begin
+      Result := R_[i].Value;
+      Break;
+    end;
+  end;
 end;
 
 function TLabelledEnum<T>.ToType(AType: string): T;

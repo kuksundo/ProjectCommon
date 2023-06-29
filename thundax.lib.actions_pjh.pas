@@ -34,21 +34,35 @@ unit thundax.lib.actions_pjh;
 interface
 
 uses
-  Generics.Collections;
+  Generics.Collections, UnitEnumHelper;
 
 type
   TDynGetMessage = procedure(AIndex: integer; var AMsg: string) of object;
   TExecuteFunction = procedure(AFuncName: string) of object;
 
-  TActionType = (atNull, atMousePos, atMouseLClick, atMouseLDClick, atMouseRClick, atMouseRDClick, atKey,
-    atMessage, atWait, atMessage_Dyn, atExecuteFunc, atMouseDrag, atDragBegin, atDragEnd,
-    atMouseLDown, atMouseLUp, atMouseRDown, atMouseRUp, atMouseMDown, atMouseMUp);
+  TActionType = (atNull, atMousePos, atMouseLClick, atMouseLDClick,
+    atMouseRClick, atMouseRDClick, atKey,
+    atMessage, atWait, atMessage_Dyn, atExecuteFunc,
+    atMouseDrag, atDragBegin, atDragEnd,
+    atMouseLDown, atMouseLUp, atMouseRDown, atMouseRUp,
+    atMouseMDown, atMouseMUp);
 
   //emSWEvent : mouse_event 함수 사용
   //emDriver : Interception Device Driver 사용
   //emHardware : Arduino Leonardo 사용
   TExecuteMode = (emSWEvent, emDriver, emHardware);
 
+const
+  R_ActionType : array[Low(TActionType)..High(TActionType)] of string =
+    ('', 'Mouse position', 'Mouse Left Click', 'Mouse Left Double Click',
+      'Mouse Right Click', 'Mouse Right Double Click', 'Press special key',
+      'Type message', 'Waiting Time', 'Dynamic message', 'Execute Function',
+      'Mouse Drag', 'Drag Begin', 'Drag End',
+      'Mouse Left Down', 'Mouse Left Up', 'Mouse Right Down', 'Mouse Right Up',
+      'Mouse Middle Down', 'Mouse Middle Up'
+    );
+
+type
   TActionTypeHelper = class(TObject)
     class function CastToString(action: TActionType): string;
     class function GetActionTypeFromDesc(description: string): TActionType;
@@ -70,6 +84,7 @@ type
   private
     Fparam2: T;
     Fparam1: T;
+
     procedure Setparam1(const Value: T);
     procedure Setparam2(const Value: T);
   public
@@ -79,6 +94,7 @@ type
     function IntegerConverterP2(): Integer;
     function StringConverterP1(): String;
     function StringConverterP2(): String;
+
     constructor Create(param1: T; param2: T);
   end;
 
@@ -107,6 +123,7 @@ type
     property VKExtendKey: integer read FVKExtendKey write FVKExtendKey;
 
     constructor Create(action: TActionType; param: TParameters<T>; ACustomDesc: string='');
+    destructor Destroy; override;
     procedure Execute(AExecMode: TExecuteMode=emSWEvent; ANotUseLerpWithMove: Boolean=False);
     procedure ExecuteSWEvent(ANotUseLerpWithMove: Boolean);
     procedure ExecuteDriver();
@@ -133,6 +150,7 @@ function GenericAsString(const Value): string; inline;
 var
   g_DynGetMessage: TDynGetMessage;
   g_ExecuteFunction: TExecuteFunction;
+  g_ActionType: TLabelledEnum<TActionType>;
 
 implementation
 
@@ -212,6 +230,12 @@ begin
     VKExtendKey := StrToIntDef(ACustomDesc, -1)
   else
     CustomDesc := ACustomDesc;
+end;
+
+destructor TAction<T>.Destroy;
+begin
+  param.Free;
+  inherited;
 end;
 
 procedure TAction<T>.ExcuteKeyDown(AVKeyCode: integer);
@@ -583,40 +607,7 @@ end;
 
 class function TActionTypeHelper.CastToString(action: TActionType): string;
 begin
-  case action of
-    atMousePos:
-      Result := 'Mouse position';
-    atMouseLClick:
-      Result := 'Mouse Left Click';
-    atMouseLDClick:
-      Result := 'Mouse Left Double Click';
-    atMouseRClick:
-      Result := 'Mouse Right Click';
-    atMouseRDClick:
-      Result := 'Mouse Right Double Click';
-    atMouseLDown: Result := 'Mouse Left Down';
-    atMouseLUp: Result := 'Mouse Left Up';
-    atMouseRDown: Result := 'Mouse Right Down';
-    atMouseRUp: Result := 'Mouse Right Up';
-    atMouseMDown: Result := 'Mouse Middle Down';
-    atMouseMUp: Result := 'Mouse Middle Up';
-    atKey:
-      Result := 'Press special key';
-    atMessage:
-      Result := 'Type message';
-    atWait:
-      Result := 'Waiting Time';
-    atMessage_Dyn:
-      Result := 'Dynamic message';
-    atExecuteFunc:
-      Result := 'Execute Function';
-    atMouseDrag:
-      Result := 'Mouse Drag';
-    atDragBegin:
-      Result := 'Drag Begin';
-    atDragEnd:
-      Result := 'Drag End';
-  end;
+  Result := g_ActionType.ToString(action);
 end;
 
 class function TActionTypeHelper.GetActionCodeFromInputFlags(
@@ -638,62 +629,63 @@ end;
 class function TActionTypeHelper.GetActionTypeFromDesc(
   description: string): TActionType;
 begin
-  if description = 'Mouse position' then
-    result := atMousePos
-  else
-  if description = 'Mouse Left Click' then
-    result := atMouseLClick
-  else
-  if description = 'Mouse Left Double Click' then
-    result := atMouseLDClick
-  else
-  if description = 'Mouse Right Click' then
-    result := atMouseRClick
-  else
-  if description = 'Mouse Right Double Click' then
-    result := atMouseRDClick
-  else
-  if description = 'Mouse Left Down' then
-    result := atMouseLDown
-  else
-  if description = 'Mouse Left Up' then
-    result := atMouseLUp
-  else
-  if description = 'Mouse Right Down' then
-    result := atMouseRDown
-  else
-  if description = 'Mouse Right Up' then
-    result := atMouseRUp
-  else
-  if description = 'Mouse Middle Down' then
-    result := atMouseMDown
-  else
-  if description = 'Mouse Middle Up' then
-    result := atMouseMUp
-  else
-  if description = 'Press special key' then
-    result := atKey
-  else
-  if description = 'Type message' then
-    result := atMessage
-  else
-  if description = 'Wait (ms)' then
-    result := atWait
-  else
-  if description = 'Dynamic message' then
-    result := atMessage_Dyn
-  else
-  if description = 'Execute Function' then
-    result := atExecuteFunc
-  else
-  if description = 'Mouse Drag' then
-    result := atMouseDrag
-  else
-  if description = 'Drag Begin' then
-    result := atDragBegin
-  else
-  if description = 'Drag End' then
-    result := atDragEnd;
+  Result := g_ActionType.ToTypeFromSubString(description);
+//  if description = 'Mouse position' then
+//    result := atMousePos
+//  else
+//  if description = 'Mouse Left Click' then
+//    result := atMouseLClick
+//  else
+//  if description = 'Mouse Left Double Click' then
+//    result := atMouseLDClick
+//  else
+//  if description = 'Mouse Right Click' then
+//    result := atMouseRClick
+//  else
+//  if description = 'Mouse Right Double Click' then
+//    result := atMouseRDClick
+//  else
+//  if description = 'Mouse Left Down' then
+//    result := atMouseLDown
+//  else
+//  if description = 'Mouse Left Up' then
+//    result := atMouseLUp
+//  else
+//  if description = 'Mouse Right Down' then
+//    result := atMouseRDown
+//  else
+//  if description = 'Mouse Right Up' then
+//    result := atMouseRUp
+//  else
+//  if description = 'Mouse Middle Down' then
+//    result := atMouseMDown
+//  else
+//  if description = 'Mouse Middle Up' then
+//    result := atMouseMUp
+//  else
+//  if description = 'Press special key' then
+//    result := atKey
+//  else
+//  if description = 'Type message' then
+//    result := atMessage
+//  else
+//  if description = 'Wait (ms)' then
+//    result := atWait
+//  else
+//  if description = 'Dynamic message' then
+//    result := atMessage_Dyn
+//  else
+//  if description = 'Execute Function' then
+//    result := atExecuteFunc
+//  else
+//  if description = 'Mouse Drag' then
+//    result := atMouseDrag
+//  else
+//  if description = 'Drag Begin' then
+//    result := atDragBegin
+//  else
+//  if description = 'Drag End' then
+//    result := atDragEnd;
 end;
 
 { TActionList }
@@ -720,4 +712,5 @@ end;
 
 initialization
   g_DynGetMessage := nil;
+  g_ActionType.InitArrayRecord(R_ActionType);
 end.
