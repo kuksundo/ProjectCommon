@@ -31,10 +31,10 @@ object InputEditF: TInputEditF
     TabOrder = 0
   end
   object BitBtn1: TBitBtn
-    Left = 56
-    Top = 80
+    Left = 40
+    Top = 82
     Width = 121
-    Height = 49
+    Height = 39
     Kind = bkCancel
     NumGlyphs = 2
     TabOrder = 1
@@ -43,7 +43,7 @@ object InputEditF: TInputEditF
     Left = 224
     Top = 82
     Width = 121
-    Height = 49
+    Height = 39
     Kind = bkOK
     NumGlyphs = 2
     TabOrder = 2
