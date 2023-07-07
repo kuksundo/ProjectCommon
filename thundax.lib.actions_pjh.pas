@@ -614,15 +614,15 @@ class function TActionTypeHelper.GetActionCodeFromInputFlags(
   AInputFlags: LongWord): string;
 begin
   case AInputFlags of
-    MOUSEEVENTF_LEFTDOWN: Result := 'Mouse Left Down';
-    MOUSEEVENTF_LEFTUP: Result := 'Mouse Left Up';
-    MOUSEEVENTF_RIGHTDOWN: Result := 'Mouse Right Down';
-    MOUSEEVENTF_RIGHTUP: Result := 'Mouse Right Up';
+    MOUSEEVENTF_LEFTDOWN: Result := g_ActionType.ToString(atMouseLDown);// 'Mouse Left Down';
+    MOUSEEVENTF_LEFTUP: Result := g_ActionType.ToString(atMouseLUp);//'Mouse Left Up';
+    MOUSEEVENTF_RIGHTDOWN: Result := g_ActionType.ToString(atMouseRDown);//'Mouse Right Down';
+    MOUSEEVENTF_RIGHTUP: Result := g_ActionType.ToString(atMouseRUp);//'Mouse Right Up';
     MOUSEEVENTF_MOVE,
     MOUSEEVENTF_ABSOLUTE,
    (MOUSEEVENTF_MOVE or MOUSEEVENTF_ABSOLUTE),
    //MOUSEEVENTF_VIRTUALDESK = $4000 : SendInputHelper.pas¿¡¼­ Á¤ÀÇµÊ
-   (MOUSEEVENTF_MOVE or MOUSEEVENTF_ABSOLUTE or $4000): Result := 'Mouse position';
+   (MOUSEEVENTF_MOVE or MOUSEEVENTF_ABSOLUTE or $4000): Result := g_ActionType.ToString(atMousePos);//'Mouse position';
   end;
 end;
 
