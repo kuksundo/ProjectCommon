@@ -14,6 +14,8 @@ function GetEndDateFromQuarter(AYear, AQuarter: word): TDateTime;
 function GetPrevQuarterFromQuarter(AQuarter: word): word;
 function GetPrevYearFromQuarter(AYear, AQuarter: word): word;
 function DateTimeMinusInteger(d1:TDateTime;i:integer;mType:integer;Sign:Char):TDateTime;
+//ADate의 시간을 23:59:59 로 설정하여 반환함
+function GetEndTimeOfTheDay(ADate:TDateTime): TDateTime;
 
 var pjhShortMonthNames : array[1..12] of string =
   ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
@@ -142,6 +144,20 @@ begin
     Result := d1 + (i/tmp)
   else
     Result := d1 - (i/tmp);
+end;
+
+function GetEndTimeOfTheDay(ADate:TDateTime): TDateTime;
+var hour,min,sec,msec:word;
+    year,mon,dat: word;
+begin
+  Decodedate(ADate,year,mon,dat);
+
+  hour := 23;
+  min := 59;
+  sec := 59;
+  msec := 999;
+
+  Result := EncodeDateTime(year,mon,dat,hour,min,sec,msec);
 end;
 
 end.
