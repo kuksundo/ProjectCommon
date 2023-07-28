@@ -17,11 +17,15 @@ function GetActiveMSPPTOleObject(ADocument: TFileName; AVisible: boolean=True) :
 function GetActiveMSPPTClass(AFileName: TFileName; AVisible: boolean) : PowerPointApplication;
 function PPT_StringReplace(PPTApp: PowerPointApplication; SearchString, ReplaceString: string;
   Flags: TPPTReplaceFlags=[]): Boolean;
+function PPT_StringReplaceFromSlide(ASlide: PowerPointSlide; SearchString, ReplaceString: string;
+  Flags: TPPTReplaceFlags=[]): Boolean;
 procedure PPT_InsertImageToPPTFromClipboard(APPTApp: PowerPointApplication;
   ASlideNo: integer; AImgHeight, AImgWidth, AImgTop, AImgLeft: single);
 procedure PPT_InsertImageToSlideFromClipboard(ASlide: PowerPointSlide; ASlideHeight, ASlideWidth,
   AImgHeight, AImgWidth, AImgTop, AImgLeft: single);
 procedure PPT_InsertImageToShapeFromClipboard(AShape: PowerPoint2010.Shape);
+function PPT_CopySlideFromSrcSlide(ASlide: PowerPointSlide): SlideRange;
+function PPT_CopySlideFromSlideIndex(PPTApp: PowerPointApplication; ASlideIndex: integer): PowerPointSlide;
 
 implementation
 
@@ -84,12 +88,12 @@ end;
 function PPT_StringReplace(PPTApp: PowerPointApplication; SearchString, ReplaceString: string;
   Flags: TPPTReplaceFlags): Boolean;
 var
-  i, j, k, LNewStartPos: integer;
+  i, k: integer;
   LPPtSlide: PowerPointSlide;
-  LShape: PowerPoint2010.Shape;
   LPPtPresentation: PowerPointPresentation;
-  LTextRange, LTempTextRange: TextRange;
 begin
+  Result := False;
+
   for k := 1 to PPTApp.Presentations.Count do
   begin
     LPPtPresentation := PPTApp.Presentations.Item(k);
@@ -97,31 +101,44 @@ begin
     for i := 1 to LPPtPresentation.Slides.Count do
     begin
       LPPtSlide := LPPtPresentation.Slides.Item(i);
-
-      for j := 1 to LPPtSlide.Shapes.Count do
-      begin
-        LShape := LPPtSlide.Shapes.Item(j);
-
-        if LShape.HasTextFrame = msoTrue then
-        begin
-          if LShape.TextFrame.HasText = msoTrue then
-          begin
-            LTextRange := LShape.TextFrame.TextRange;
-            LTempTextRange := LTextRange.Replace(SearchString, ReplaceString, 0, msoFalse, msoFalse);
-
-            if pptrfReplaceAll in Flags then
-            begin
-              while LTempTextRange.Text <> '' do
-              begin
-                LNewStartPos := LTempTextRange.Start + LTempTextRange.Length;
-                LTempTextRange := LTextRange.Replace(SearchString, ReplaceString, LNewStartPos, msoFalse, msoFalse);
-              end;//while
-            end;
-          end;
-        end;
-      end;//for j
+      Result := PPT_StringReplaceFromSlide(LPPtSlide, SearchString, ReplaceString, Flags);
     end;//for i
   end;
+end;
+
+function PPT_StringReplaceFromSlide(ASlide: PowerPointSlide; SearchString, ReplaceString: string;
+  Flags: TPPTReplaceFlags=[]): Boolean;
+var
+  j, LNewStartPos: integer;
+  LShape: PowerPoint2010.Shape;
+  LTextRange, LTempTextRange: TextRange;
+begin
+  Result := False;
+
+  for j := 1 to ASlide.Shapes.Count do
+  begin
+    LShape := ASlide.Shapes.Item(j);
+
+    if LShape.HasTextFrame = msoTrue then
+    begin
+      if LShape.TextFrame.HasText = msoTrue then
+      begin
+        LTextRange := LShape.TextFrame.TextRange;
+        LTempTextRange := LTextRange.Replace(SearchString, ReplaceString, 0, msoFalse, msoFalse);
+
+        if pptrfReplaceAll in Flags then
+        begin
+          while LTempTextRange.Text <> '' do
+          begin
+            LNewStartPos := LTempTextRange.Start + LTempTextRange.Length;
+            LTempTextRange := LTextRange.Replace(SearchString, ReplaceString, LNewStartPos, msoFalse, msoFalse);
+          end;//while
+        end;
+      end;
+    end;
+  end;//for j
+
+  Result := True;
 end;
 
 procedure PPT_InsertImageToPPTFromClipboard(APPTApp: PowerPointApplication;
@@ -160,6 +177,22 @@ end;
 procedure PPT_InsertImageToShapeFromClipboard(AShape: PowerPoint2010.Shape);
 begin
 ;//  AShape.Paste;
+end;
+
+function PPT_CopySlideFromSrcSlide(ASlide: PowerPointSlide): SlideRange;
+begin
+  Result := ASlide.Duplicate;
+end;
+
+function PPT_CopySlideFromSlideIndex(PPTApp: PowerPointApplication; ASlideIndex: integer): PowerPointSlide;
+var
+  LSrcSlide: PowerPointSlide;
+  LSlideRange: SlideRange;
+begin
+  LSrcSlide := PPTApp.ActivePresentation.Slides.Item(ASlideIndex);
+  LSlideRange := PPT_CopySlideFromSrcSlide(LSrcSlide);
+
+  Result := LSlideRange.Item(1);
 end;
 
 end.

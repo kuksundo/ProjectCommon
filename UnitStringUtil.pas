@@ -456,7 +456,7 @@ end;
 
 function RemoveSpaceBetweenStrings(const AStr: string): string;
 begin
-  replaceString(AStr, ' ', '');
+  Result := replaceString(AStr, ' ', '');
 end;
 
 function StrTokenUpcase(var S: String): string;
