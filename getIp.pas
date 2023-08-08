@@ -2,11 +2,13 @@ unit getIp;
 
 interface
 
-uses Windows, Classes, SysUtils, WinSock, IpHlpApi, IpTypes, IdTCPClient;
+uses Windows, Classes, SysUtils, WinSock, IpHlpApi, IpTypes, IdTCPClient,
+  IdGlobal, IdStack;
 
 function GetLocalIP(AIndex: integer = -1; AStrings: TStrings=nil) : string;
 function GetLocalIPFromDesignated(ADesignatedIP: string) : string;
 function GetLocalIPList : TStrings;
+function GetLocalIPListUsingIndy : TStrings;
 procedure RetrieveLocalAdapterInformation(strings: TStrings);
 function CheckTCP_PortOpen(ipAddressStr: Ansistring; dwPort: Word): Boolean;
 function IsPortActive(AHost : string; APort : Word): boolean;
@@ -101,6 +103,39 @@ function GetLocalIPList : TStrings;
 begin
   Result := TStringList.Create;
   GetLocalIP(-1, Result);
+end;
+
+function GetLocalIPListUsingIndy : TStrings;
+var
+  LList: TIdStackLocalAddressList;
+  LTemp: TIdStackLocalAddress;
+  i: integer;
+begin
+  Result := TStringList.Create;
+  try
+    TIdStack.IncUsage;//Instantiates GStack if needed
+    try
+      LList := TIdStackLocalAddressList.Create;
+      try
+        GStack.GetLocalAddressList(LList);
+
+        for i := 0 to LList.Count - 1 do
+        begin
+          LTemp := LList[i];
+
+          if LTemp.IPVersion = Id_IPv4 then
+            Result.Add(LTemp.IPAddress);
+        end;
+      finally
+        LList.Free;
+      end;
+    finally
+      TIdStack.DecUsage;
+    end;
+  except
+    Result.Free;
+    raise;
+  end;
 end;
 
 procedure RetrieveLocalAdapterInformation(strings: TStrings);
