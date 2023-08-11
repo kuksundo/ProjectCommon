@@ -26,6 +26,8 @@ procedure PPT_InsertImageToSlideFromClipboard(ASlide: PowerPointSlide; ASlideHei
 procedure PPT_InsertImageToShapeFromClipboard(AShape: PowerPoint2010.Shape);
 function PPT_CopySlideFromSrcSlide(ASlide: PowerPointSlide): SlideRange;
 function PPT_CopySlideFromSlideIndex(PPTApp: PowerPointApplication; ASlideIndex: integer): PowerPointSlide;
+function PPT_StringFindNFontSize(ASlide: PowerPointSlide; SearchString: string; ASize: integer): Boolean;
+procedure PPT_SaveAsFormat(AOriginalFileName: string; AFileFormat: integer);
 
 implementation
 
@@ -193,6 +195,38 @@ begin
   LSlideRange := PPT_CopySlideFromSrcSlide(LSrcSlide);
 
   Result := LSlideRange.Item(1);
+end;
+
+function PPT_StringFindNFontSize(ASlide: PowerPointSlide; SearchString: string; ASize: integer): Boolean;
+var
+  i: integer;
+  LShape: PowerPoint2010.Shape;
+  LTextRange, LFoundTxtRange: TextRange;
+begin
+  for i := 1 to ASlide.Shapes.Count do
+  begin
+    LShape := ASlide.Shapes.Item(i);
+    //만약 해당 슬라이드가 Text를 포함하고 있다면
+    if LShape.HasTextFrame = msoTrue then
+    begin
+      if LShape.TextFrame.HasText = msoTrue then
+      begin
+        LTextRange := LShape.TextFrame.TextRange;
+
+        LFoundTxtRange := LTextRange.Find(SearchString,0,msoFalse,msoTrue);
+
+        if Assigned(LFoundTxtRange) then
+        begin
+          LFoundTxtRange.Font.Size := ASize;
+        end;
+      end;
+    end;
+  end;
+end;
+
+procedure PPT_SaveAsFormat(AOriginalFileName: string; AFileFormat: integer);
+begin
+
 end;
 
 end.
