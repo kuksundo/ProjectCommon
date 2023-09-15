@@ -16,6 +16,10 @@ function GetPrevYearFromQuarter(AYear, AQuarter: word): word;
 function DateTimeMinusInteger(d1:TDateTime;i:integer;mType:integer;Sign:Char):TDateTime;
 //ADate의 시간을 23:59:59 로 설정하여 반환함
 function GetEndTimeOfTheDay(ADate:TDateTime): TDateTime;
+//초를 시분초로 분할
+function GetSecTohhnnss(ASec: double): string;
+//두 날짜의 차이를 00년00월00일 형식으로 반환(입사일과 퇴사일을 주면 근무일수를 년월일 형식으로 표시함)
+procedure GetyymmddBetweenDate(AFrom, ATo: TDate; var Ayy, Amm, Add: word);
 
 var pjhShortMonthNames : array[1..12] of string =
   ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
@@ -160,4 +164,79 @@ begin
   Result := EncodeDateTime(year,mon,dat,hour,min,sec,msec);
 end;
 
+function GetSecTohhnnss(ASec: double): string;
+var
+  r, r1, r2: double;
+begin
+  r := ASec;
+  r1 := Trunc(r/60); //분
+  r2 := Trunc(r1/60); //시
+  r := r - (r1*60);
+  r1 := r1 - (r2*60);
+
+  Result := FloatToStr(r2) + '시' + FloatToStr(r1) + '분' + FloatToStr(r) + '초';
+end;
+
+procedure GetyymmddBetweenDate(AFrom, ATo: TDate; var Ayy, Amm, Add: word);
+var
+  d1, d2, m1, m2: word;
+begin
+  Ayy := 0;
+  Amm := 0;
+  Add := 0;
+  d1 := 0;
+
+  ATo := IncDay(ATo);
+  Ayy := YearsBetween(AFrom, ATo);
+  AFrom := IncYear(AFrom, Ayy);
+  m1 := DaysInMonth(AFrom);
+  m2 := DaysInMonth(ATo-1);
+  d2 := DayOf(ATo-1);
+  ATo := ATo-d2;
+
+  if DayOf(AFrom) > 1 then
+  begin
+    d1 := m1 - DayOf(AFrom) + 1;
+    AFrom := AFrom + d1;
+  end;
+
+  if AFrom < ATo then
+  begin
+    while AFrom + DaysInMonth(AFrom) < ATo + 1 do
+    begin
+      Inc(Amm);
+      AFrom := AFrom + DaysInMonth(AFrom);
+    end;
+  end;
+
+  if d1 = m1 then
+  begin
+    Inc(Amm);
+    d1 := 0;
+  end;
+
+  if d1 = m2 then
+  begin
+    Inc(Amm);
+    d2 := 0;
+  end;
+
+  d1 := d1 + d2;
+
+  if d1 >= m1 then
+  begin
+    d1 := d1 - m1;
+    Inc(Amm);
+  end;
+
+  if AFrom > ATo then
+  begin
+    Inc(Amm, -1);
+    Add := d1;
+    Ayy := Ayy + Amm div 12;
+    Amm := Amm mod 12;
+  end;
+end;
+
 end.
+
