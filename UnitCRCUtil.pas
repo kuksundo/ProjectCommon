@@ -8,6 +8,7 @@ function UpdateCRC16(InitCRC: Word; var Buffer; Length: LongInt): Word;
 function CalcCRC16_2(const data: string): word;
 function Update_LRC(Data: string; size: integer): Byte;
 function Check_LRC(Data: array of char; size: integer; lrc: Byte): Boolean;
+function CalcCRC32(const AData: TBytes; AInitial: Cardinal): Cardinal;
 
 implementation
 
@@ -139,6 +140,39 @@ begin
     Result := True
   else
     Result := False;
+end;
+
+
+function CalcCRC32(const AData: TBytes; AInitial: Cardinal): Cardinal;
+var
+  LCrc, x: Cardinal;
+  i,z: integer;
+begin
+  LCrc := initial;
+
+  for i := 0 to High(AData) do
+  begin
+    x := AData[i];
+
+    for z := 0 to 7 do
+    begin
+      if ((LCrc xor x)) and $01 = 1 then
+      begin
+        LCrc := LCrc shr 1;
+        LCrc := LCrc xor $04c11db7;
+      end
+      else
+      begin
+        LCrc := LCrc shr 1;
+      end;
+
+      x := x shr 1;
+    end;
+  end;
+
+  LCrc := LCrc and $ffffffff;
+
+  Result := LCrc;
 end;
 
 end.
