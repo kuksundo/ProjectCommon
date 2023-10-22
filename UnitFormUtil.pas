@@ -22,7 +22,8 @@ procedure ToggleFullScreenWithNoTaskBar(AForm: TForm);
 procedure DisplayFormOnMultiMonitor(AForm: TForm; AMonitorIdx: integer);
 procedure ToggleFullScreenWidth(AForm: TForm; AMonitorIdx: integer);
 procedure SetWindowPos_JH(AHandle: THandle);
-function GetComponentUnderMouseCursor(AAllowDisabled: Boolean=True; AAllowWinControl: Boolean=True): TControl;
+//아래 함수는 UnitMouseUtil.pas로 이동함
+//function GetComponentUnderMouseCursor(AAllowDisabled: Boolean=True; AAllowWinControl: Boolean=True): TControl;
 
 implementation
 
@@ -276,24 +277,24 @@ begin
   SetWindowPos(AHandle, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE or SWP_NOSIZE or SWP_NOACTIVATE);
 end;
 
-function GetComponentUnderMouseCursor(AAllowDisabled: Boolean; AAllowWinControl: Boolean): TControl;
-var
-  LWindow: TWinControl;
-  LControl: TControl;
-  LPoint: TPoint;
-begin
-  Result := nil;
-  LPoint := Mouse.CursorPos;
-  LWindow := FindVCLWindow(LPoint);
-
-  if LWindow <> nil then
-  begin
-    Result := LWindow;
-    LControl := LWindow.ControlAtPos(LWindow.ScreenToClient(LPoint), AAllowDisabled, AAllowWinControl);
-
-    if LControl <> nil then
-      Result := LControl;
-  end;
-end;
+//function GetComponentUnderMouseCursor(AAllowDisabled: Boolean; AAllowWinControl: Boolean): TControl;
+//var
+//  LWindow: TWinControl;
+//  LControl: TControl;
+//  LPoint: TPoint;
+//begin
+//  Result := nil;
+//  LPoint := Mouse.CursorPos;
+//  LWindow := FindVCLWindow(LPoint);
+//
+//  if LWindow <> nil then
+//  begin
+//    Result := LWindow;
+//    LControl := LWindow.ControlAtPos(LWindow.ScreenToClient(LPoint), AAllowDisabled, AAllowWinControl);
+//
+//    if LControl <> nil then
+//      Result := LControl;
+//  end;
+//end;
 
 end.

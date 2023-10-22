@@ -3,11 +3,12 @@ unit UnitMouseUtil;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, Forms;
+  Winapi.Windows, Winapi.Messages, System.SysUtils, Forms, Controls;
 
 procedure MouseLock(AForm: TForm; var AMouseLock: Boolean; AIsLock: Boolean);
 procedure MoveMouse(X,Y,Speed: Integer);
 function GetMouseFlagFromType(AType: Cardinal): Cardinal;
+function GetComponentUnderMouseCursor(AAllowDisabled: Boolean=True; AAllowWinControl: Boolean=True): TControl;
 
 implementation
 
@@ -110,7 +111,27 @@ begin
   begin
     Result := MOUSEEVENTF_MOVE + MOUSEEVENTF_ABSOLUTE;
   end
+end;
 
+function GetComponentUnderMouseCursor(AAllowDisabled: Boolean; AAllowWinControl: Boolean): TControl;
+var
+  LWindow: TWinControl;
+  LControl: TControl;
+  LPoint: TPoint;
+begin
+  Result := nil;
+
+  LPoint := Mouse.CursorPos;
+  LWindow := FindVCLWindow(LPoint);
+
+  if LWindow <> nil then
+  begin
+    Result := LWindow;
+    LControl := LWindow.ControlAtPos(LWindow.ScreenToClient(LPoint), AAllowDisabled, AAllowWinControl);
+
+    if LControl <> nil then
+      Result := LControl;
+  end;
 end;
 
 end.
