@@ -22,6 +22,7 @@ procedure ToggleFullScreenWithNoTaskBar(AForm: TForm);
 procedure DisplayFormOnMultiMonitor(AForm: TForm; AMonitorIdx: integer);
 procedure ToggleFullScreenWidth(AForm: TForm; AMonitorIdx: integer);
 procedure SetWindowPos_JH(AHandle: THandle);
+procedure MakeTransparentForm(AForm: TForm; AAlpha: integer);
 //아래 함수는 UnitMouseUtil.pas로 이동함
 //function GetComponentUnderMouseCursor(AAllowDisabled: Boolean=True; AAllowWinControl: Boolean=True): TControl;
 
@@ -275,6 +276,14 @@ end;
 procedure SetWindowPos_JH(AHandle: THandle);
 begin
   SetWindowPos(AHandle, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE or SWP_NOSIZE or SWP_NOACTIVATE);
+end;
+
+procedure MakeTransparentForm(AForm: TForm; AAlpha: integer);
+begin
+  //폼을 레이어드윈도스타일로 바꾼다
+  SetWindowLong(AForm.Handle, GWL_EXSTYLE, GetWindowLong(AForm.Handle, GWL_EXSTYLE) or WS_EX_LAYERED);
+  //폼에 Alpha 걊을 적용한다
+  SetLayeredWindowAttributes(AForm.Handle, 0, Round((255 * 70) / 100), LWA_ALPHA);
 end;
 
 //function GetComponentUnderMouseCursor(AAllowDisabled: Boolean; AAllowWinControl: Boolean): TControl;
