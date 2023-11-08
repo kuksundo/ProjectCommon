@@ -115,20 +115,22 @@ begin
   try
     TIdStack.IncUsage;//Instantiates GStack if needed
     try
-      LList := TIdStackLocalAddressList.Create;
-      try
-        GStack.GetLocalAddressList(LList);
-
-        for i := 0 to LList.Count - 1 do
-        begin
-          LTemp := LList[i];
-
-          if LTemp.IPVersion = Id_IPv4 then
-            Result.Add(LTemp.IPAddress);
-        end;
-      finally
-        LList.Free;
-      end;
+//      LList := TIdStackLocalAddressList.Create;
+//      try
+//        GStack.GetLocalAddressList(LList);
+//
+//
+//        for i := 0 to LList.Count - 1 do
+//        begin
+//          LTemp := LList[i];
+//
+//          if LTemp.IPVersion = Id_IPv4 then
+//            Result.Add(LTemp.IPAddress);
+//        end;
+//      finally
+//        LList.Free;
+//      end;
+      Result := GStack.LocalAddresses;
     finally
       TIdStack.DecUsage;
     end;
