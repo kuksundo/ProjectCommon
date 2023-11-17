@@ -10,6 +10,8 @@ type
 
 function ISO8601ToDate(const AISODate: string; AReturnUTC: Boolean = True): TDateTime;
 function DateToISO8601(const ADate: TDateTime; AInputIsUTC: Boolean = True): string;
+function DateTimeToUnix(const AValue: TDateTime; AInputIsUTC: Boolean = True): Int64;
+function UnixToDateTime(const AValue: Int64; AReturnUTC: Boolean = True): TDateTime;
 
 implementation
 
@@ -241,6 +243,27 @@ begin
         Abs(Bias) mod MinsPerHour]);
     end
   end;
+end;
+
+function DateTimeToUnix(const AValue: TDateTime; AInputIsUTC: Boolean): Int64;
+var
+  LDate: TDateTime;
+ begin
+  if AInputIsUTC then
+    LDate := AValue
+  else
+    LDate := TTimeZone.Local.ToUniversalTime(AValue);
+  Result := SecondsBetween(UnixDateDelta, LDate);
+  if LDate < UnixDateDelta then
+     Result := -Result;
+ end;
+
+function UnixToDateTime(const AValue: Int64; AReturnUTC: Boolean): TDateTime;
+begin
+  if AReturnUTC then
+    Result := IncSecond(UnixDateDelta, AValue)
+  else
+    Result := TTimeZone.Local.ToLocalTime(IncSecond(UnixDateDelta, AValue));
 end;
 
 end.
