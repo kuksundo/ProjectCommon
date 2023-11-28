@@ -27,13 +27,21 @@ type
     FResponseQueue: TOmniMessageQueue;
     FSendMsgQueue: TOmniMessageQueue;
     FStopEvent    : TEvent;
+    FFormHandle: THandle;
   protected
+    procedure SetFormHandle(AHandle: THandle);
     procedure Execute; override;
   public
-    constructor Create(commandQueue, responseQueue, sendQueue: TOmniMessageQueue);
+    constructor Create(AcommandQueue, AresponseQueue, AsendQueue: TOmniMessageQueue); virtual;
     destructor Destroy; override;
     procedure Stop;
-  end;
+
+    property CommandQueue: TOmniMessageQueue read FCommandQueue;
+    property ResponseQueue: TOmniMessageQueue read FResponseQueue write FResponseQueue;
+    property SendMsgQueue: TOmniMessageQueue read FSendMsgQueue write FSendMsgQueue;
+    property StopEvent: TEvent read FStopEvent;
+    property FormHandle: THandle read FFormHandle write SetFormHandle;
+  end;
 
   {ex:
     var
@@ -81,14 +89,14 @@ implementation
       raise Exception.Create('Command queue is full!');
  }
 
-constructor TWorker.Create(commandQueue, responseQueue,
-  sendQueue: TOmniMessageQueue);
+constructor TWorker.Create(AcommandQueue, AresponseQueue,
+  AsendQueue: TOmniMessageQueue);
 begin
   inherited Create;
 
-  FCommandQueue := commandQueue;
-  FResponseQueue := responseQueue;
-  FSendMsgQueue := sendQueue;
+  FCommandQueue := AcommandQueue;
+  FResponseQueue := AresponseQueue;
+  FSendMsgQueue := AsendQueue;
   FStopEvent := TEvent.Create;
 end;
 
@@ -134,6 +142,11 @@ begin
         TpjhOmniMsgQClass.ProcessResults();
     end;
   end;
+end;
+
+procedure TWorker.SetFormHandle(AHandle: THandle);
+begin
+  FFormHandle := AHandle;
 end;
 
 procedure TWorker.Stop;
