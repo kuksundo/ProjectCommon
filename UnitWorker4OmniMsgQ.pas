@@ -34,6 +34,7 @@ type
   public
     constructor Create(AcommandQueue, AresponseQueue, AsendQueue: TOmniMessageQueue); virtual;
     destructor Destroy; override;
+    procedure CustomCreate; virtual; abstract;
     procedure Stop;
 
     property CommandQueue: TOmniMessageQueue read FCommandQueue;
@@ -98,6 +99,8 @@ begin
   FResponseQueue := AresponseQueue;
   FSendMsgQueue := AsendQueue;
   FStopEvent := TEvent.Create;
+
+  CustomCreate();
 end;
 
 destructor TWorker.Destroy;
