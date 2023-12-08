@@ -10,6 +10,7 @@ const
 
 type
   TProcessResults = procedure of object;
+  TProcessCommand = procedure(AMsg: TOmniMessage) of object;
 
   TCommandWord = (cwNone, cwSendMsg, cwRecvMsg, cwDispMsg, cwCustomCommand);
 
@@ -43,6 +44,18 @@ type
     property StopEvent: TEvent read FStopEvent;
     property FormHandle: THandle read FFormHandle write SetFormHandle;
   end;
+
+  TWorker2 = class(TWorker)
+  private
+    FProcessCommand: TProcessCommand;
+  protected
+    procedure ProcessCommandProc(AMsg: TOmniMessage); virtual; abstract;
+    procedure Execute; override;
+  public
+    procedure SetProcessCmd(AProcessCmd: TProcessCommand);
+
+    property ProcessCommand: TProcessCommand read FProcessCommand;
+  end;
 
   {ex:
     var
@@ -224,6 +237,36 @@ begin
   end;
 
   FreeAndNil(FCommandQueue);
+end;
+
+{ TWorker2 }
+
+procedure TWorker2.Execute;
+var
+  handles: array [0..1] of THandle;
+  msg    : TOmniMessage;
+begin
+  try
+    handles[0] := StopEvent.Handle;
+    handles[1] := CommandQueue.GetNewMessageEvent;
+
+    while WaitForMultipleObjects(2, @handles, false, INFINITE) = (WAIT_OBJECT_0 + 1) do
+    begin
+      if terminated then
+        break;
+
+      while CommandQueue.TryDequeue(msg) do
+      begin
+        ProcessCommandProc(msg);
+      end;//while
+    end;//while
+  finally
+  end;
+end;
+
+procedure TWorker2.SetProcessCmd(AProcessCmd: TProcessCommand);
+begin
+  FProcessCommand := AProcessCmd;
 end;
 
 end.
