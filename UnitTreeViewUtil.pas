@@ -60,6 +60,8 @@ function GetNodeByText(ATV: TTreeView; AText: string; ALevel: integer=-1; AVisib
 function CompareTwoTreeViewByTextWithLevel(AOriginal, ATarget: TTreeView; ALevel: integer=-1; ANonExistList: TStrings=nil): TTreeNode;
 function FindMatchStrFromTV(ATV: TTreeView; ASubStr: string; ALevel: integer=-1; AIsCaseSensitive: Boolean = False): integer;
 function FindMatchStrFromList(AList: TStrings; ASubStr: string; ALevel: integer=-1; AIsCaseSensitive: Boolean = False): integer;
+procedure SaveTreeView2File(const ATV: TTreeView; const AFileName: string);
+procedure LoadTreeViewFromFile(const AFileName: string; ATV: TTreeView);
 
 implementation
 
@@ -514,6 +516,31 @@ begin
       System.Insert(#9, ASubStr, 1);
 
     Result := AList.IndexOf(ASubStr);
+end;
+
+procedure SaveTreeView2File(const ATV: TTreeView; const AFileName: string);
+var
+  LStrList: TStringList;
+begin
+  LStrList := TreeView2StringList(ATV);
+  try
+    LStrList.SaveToFile(AFileName);
+  finally
+    LStrList.Free;
+  end;
+end;
+
+procedure LoadTreeViewFromFile(const AFileName: string; ATV: TTreeView);
+var
+  LStrList: TStringList;
+begin
+  LStrList := TStringList.Create;
+  try
+    LStrList.LoadFromFile(AFileName);
+    LoadString2TreeView(ATV, LStrList.Text);
+  finally
+    LStrList.Free;
+  end;
 end;
 
 end.

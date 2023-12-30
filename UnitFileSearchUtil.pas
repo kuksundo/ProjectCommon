@@ -94,7 +94,7 @@ var
 
     if Recurse then
     begin
-      if FindFirst(ADir + '*.*', faAnyFile, SR) = 0 then
+      if FindFirst(ADir + Mask, faAnyFile, SR) = 0 then
       try
         repeat
           if SR.Attr and faDirectory = faDirectory then
@@ -136,7 +136,7 @@ var SR: TSearchRec;
 
   procedure _AllFilesInDir(ADir, AMask: string; AResult: TStrings);
   begin
-    if FindFirst(IncludeTrailingBackSlash(ADir) + '*.*', faAnyFile or faDirectory, SR) = 0 then
+    if FindFirst(IncludeTrailingBackSlash(ADir) + Mask, faAnyFile or faDirectory, SR) = 0 then
     begin
       try
         repeat
