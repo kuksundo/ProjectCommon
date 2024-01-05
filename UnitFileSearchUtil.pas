@@ -12,6 +12,7 @@ function FindAllFiles(RootFolder: string; Mask: string = '*.*';
 function FindAllFiles2(RootFolder: string; Mask: string = '*.*'): TStringList;
 function GetFirstFileNameIfExist(foldername, filemask: string): string;
 function DeleteFilesFromMatchDir(AExcludeFileDir, AExcludeFileMask, ADeleteFileDir, ADeleteFileMask: string; ASkipDir: string=''): integer;
+procedure GetFiles(var AFileList: TStringList; AFileName: string);
 
 implementation
 
@@ -211,6 +212,29 @@ begin
     LPasList.Free;
     LDcuList.Free;
   end;
+end;
+
+procedure GetFiles(var AFileList: TStringList; AFileName: string);
+Var
+  SearchRec: TSearchRec;
+  sgPath   : String;
+  inRetval : Integer;
+begin
+  sgPath := ExpandFileName(AFileName);
+  sgPath := ExtractFilePath(sgPath);
+  AFileName := ExtractFileName(AFileName);
+  Try
+    inRetval := FindFirst(sgPath + '*'+AFileName+ '*', faAnyFile, SearchRec);
+    If inRetval = 0 Then
+    begin
+      repeat
+        AFileList.Add(sgPath+SearchRec.Name);
+        inRetval := FindNext(SearchRec);
+      until (inRetval <> 0);
+    end;
+  Finally
+    SysUtils.FindClose(SearchRec);
+  End;
 end;
 
 end.

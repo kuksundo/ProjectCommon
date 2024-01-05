@@ -32,6 +32,34 @@ function Blend(Color1, Color2: TColor; A: Byte): TColor;
 
 implementation
 
+function maxTri(P1,P2,P3: double): Double;
+begin
+    Result := -1;
+    if (P1 > P2) then begin
+        if (P1 > P3) then begin
+            Result := P1;
+        end else begin
+            Result := P3;
+        end;
+    end else if P2 > P3 then begin
+        result := P2;
+    end else result := P3;
+end;
+
+function minTri(P1,P2,P3: double): Double;
+begin
+    Result := -1;
+    if (P1 < P2) then begin
+        if (P1 < P3) then begin
+            Result := P1;
+        end else begin
+            Result := P3;
+        end;
+    end else if P2 < P3 then begin
+        result := P2;
+    end else result := P3;
+end;
+
 function RGBToColor(PR,PG,PB: Integer): TColor;
 begin
   Result := TColor((PB * 65536) + (PG * 256) + PR);
@@ -75,8 +103,8 @@ begin
   LR := PRGB.R / 256;
   LG := PRGB.G / 256;
   LB := PRGB.B / 256;
-  LMin := min(LR,LG,LB);
-  LMax := max(LR,LG,LB);
+  LMin := minTri(LR,LG,LB);
+  LMax := maxTri(LR,LG,LB);
   LL := (LMax + LMin)/2;
 
   if LMin = LMax then
@@ -271,19 +299,19 @@ var
   c1, c2: LongInt;
   r, g, b, v1, v2: byte;
 begin
-  A:= Round(2.55 * A);
-  c1 := ColorToRGB(Color1);
-  c2 := ColorToRGB(Color2);
-  v1:= Byte(c1);
-  v2:= Byte(c2);
-  r:= A * (v1 - v2) shr 8 + v2;
-  v1:= Byte(c1 shr 8);
-  v2:= Byte(c2 shr 8);
-  g:= A * (v1 - v2) shr 8 + v2;
-  v1:= Byte(c1 shr 16);
-  v2:= Byte(c2 shr 16);
-  b:= A * (v1 - v2) shr 8 + v2;
-  Result := (b shl 16) + (g shl 8) + r;
+//  A:= Round(2.55 * A);
+//  c1 := ColorToRGB(Color1);
+//  c2 := ColorToRGB(Color2);
+//  v1:= Byte(c1);
+//  v2:= Byte(c2);
+//  r:= A * (v1 - v2) shr 8 + v2;
+//  v1:= Byte(c1 shr 8);
+//  v2:= Byte(c2 shr 8);
+//  g:= A * (v1 - v2) shr 8 + v2;
+//  v1:= Byte(c1 shr 16);
+//  v2:= Byte(c2 shr 16);
+//  b:= A * (v1 - v2) shr 8 + v2;
+//  Result := (b shl 16) + (g shl 8) + r;
 end;
 
 end.
