@@ -2,7 +2,7 @@ unit UnitAddSystem_XE7;
 
 interface
 
-uses System.SysUtils, System.SysConst, System.Rtti;
+uses System.SysUtils, System.SysConst, System.Rtti, System.TypInfo;
 
 type
   TBA = array of Boolean;
@@ -10,7 +10,7 @@ type
 procedure Delete_BoolArray(var A: TBA; AIdx: integer);
 //function IsManagedType(T: TypeIdentifier): Boolean;
 //function HasWeakRef(T: TypeIdentifier): Boolean;
-//function GetTypeKind(T: TypeIdentifier): TTypeKind;
+//function GetTypeKind(AT: ): TTypeKind;
 //function IsConstValue(Value): Boolean;
 
 implementation
@@ -40,9 +40,9 @@ end;
 //  Result := System.TypInfo.HasWeakRef(TypeInfo(T))
 //end;
 
-//function GetTypeKind(T: TypeIdentifier): TTypeKind;
+//function GetTypeKind(AT: TypeIdentifier): TTypeKind;
 //begin
-//  Result := PTypeInfo(System.TypeInfo(T))^.Kind;
+//  Result := PTypeInfo(TypeInfo(AT))^.Kind;
 //end;
 
 end.
