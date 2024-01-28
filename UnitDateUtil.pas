@@ -4,6 +4,19 @@ interface
 
 uses SysUtils, System.DateUtils;
 
+const
+  HoursPerDay   = 24;
+  MinsPerHour   = 60;
+  SecsPerMin    = 60;
+  MSecsPerSec   = 1000;
+  MinsPerDay    = HoursPerDay * MinsPerHour;
+  SecsPerDay    = MinsPerDay * SecsPerMin;
+  MSecsPerDay   = SecsPerDay * MSecsPerSec;
+  FMSecsPerDay: Single = MSecsPerDay;
+  IMSecsPerDay: integer = MSecsPerDay;
+  DateDelta = 693594;
+  UnixDateDelta = 25569;
+
 //날짜를 입력 받아서 분기를 반환함
 function QuarterOf(ADate: TDateTime): word;
 function IncQuarter(ADate: TDateTime): word;
@@ -22,6 +35,7 @@ function GetEndTimeOfTheDay(ADate:TDateTime): TDateTime;
 function GetSecTohhnnss(ASec: double): string;
 //두 날짜의 차이를 00년00월00일 형식으로 반환(입사일과 퇴사일을 주면 근무일수를 년월일 형식으로 표시함)
 procedure GetyymmddBetweenDate(AFrom, ATo: TDate; var Ayy, Amm, Add: word);
+function DateTimeToMilliseconds(ADT: TDateTime): int64;
 
 var pjhShortMonthNames : array[1..12] of string =
   ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
@@ -252,6 +266,24 @@ begin
     Ayy := Ayy + Amm div 12;
     Amm := Amm mod 12;
   end;
+end;
+
+function DateTimeToMilliseconds(ADT: TDateTime): int64;
+asm // faster version by AB
+       fld   ADT
+       fmul  fmsecsperday
+       sub   esp,8
+       fistp qword ptr [esp]
+       pop   eax
+       pop   edx
+       or    edx,edx
+       mov   ecx,MSecsPerDay
+       jns   @@1
+       neg   edx
+       neg   eax
+       sbb   edx,0
+  @@1: div   ecx
+       mov   eax,edx // we only need ttimestamp.time = Milli Seconds count
 end;
 
 end.
