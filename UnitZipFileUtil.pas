@@ -8,6 +8,7 @@ function SizeStr(const ASize: UInt32): string;
 function ZipVerStr(const AVersion: UInt16): string;
 function DOSFileDateToDateTime(FileDate: UInt32): Extended;
 function GetZipFileInfo2StrList(AZipHeader: TZipHeader; AFileName: string; AFileComment: string=''): TStringList;
+function IsValidZipFile(const AZipFileName: string): integer;
 
 implementation
 
@@ -48,6 +49,28 @@ begin
   Result.Add('Zip Format Version : ' + ZipVerStr(AZipHeader.MadeByVersion));
   Result.Add('Minimum ZIP Version : ' + ZipVerStr(AZipHeader.RequiredVersion));
   Result.Add('Comment : ' + AFileComment);
+end;
+
+function IsValidZipFile(const AZipFileName: string): integer;
+var
+  LZipFile: TZipFile;
+  LIsValid: Boolean;
+begin
+  Result := 0;
+
+  if not FileExists(AZipFileName) then
+  begin
+    Result := -1;
+    exit;
+  end;
+
+  LZipFile := TZipFile.Create;
+  try
+    LZipFile.Open(AZipFileName, zmRead);
+//    LIsValid := LZipFile.IsValid()
+  finally
+    LZipFile.Free;
+  end;
 end;
 
 end.

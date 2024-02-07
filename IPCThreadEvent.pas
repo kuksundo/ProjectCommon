@@ -76,7 +76,7 @@ end;
 
 destructor TIPCEvent<TEventData>.Destroy;
 begin
-//  FSharedMem.Free;
+  FSharedMem.Free;
   inherited;
 end;
 
