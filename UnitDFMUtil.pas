@@ -23,6 +23,8 @@ function CheckDFMFormatFromStream(const AStream: TStream): TStreamOriginalFormat
 procedure SaveComponentToFile(Component: TComponent; const FileName: TFileName);
 procedure LoadComponentFromFile(Component: TComponent; const FileName: TFileName);
 
+function GetStringStreamFromControl(const AControl: TWinControl): TStringStream;
+
 implementation
 
 procedure DeleteAllComponents(ParentControl: TWinControl);
@@ -524,6 +526,21 @@ begin
       MemStream.Free;
       FileStream.Free;
     end;
+  end;
+end;
+
+function GetStringStreamFromControl(const AControl: TWinControl): TStringStream;
+var
+  MemoryStream: TMemoryStream;
+begin
+  MemoryStream := TMemoryStream.Create;
+  Result := TStringStream.Create;
+  try
+    MemoryStream.WriteComponent(AControl);
+    MemoryStream.Position := 0;
+    ObjectBinaryToText(MemoryStream, Result);
+  finally
+    MemoryStream.Free;
   end;
 end;
 

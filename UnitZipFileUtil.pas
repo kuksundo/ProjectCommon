@@ -9,6 +9,10 @@ function ZipVerStr(const AVersion: UInt16): string;
 function DOSFileDateToDateTime(FileDate: UInt32): Extended;
 function GetZipFileInfo2StrList(AZipHeader: TZipHeader; AFileName: string; AFileComment: string=''): TStringList;
 function IsValidZipFile(const AZipFileName: string): integer;
+procedure AddText2Zip(const AZipFileName, AInternalName, AText: string);
+procedure AddStream2Zip(const AZipFileName, AInternalName: string; AStream: TStream);
+function ExtractFile2StreamByName(const AZipFileName, AInternalName: string): TStringStream;
+function GetIndexFromZipFile(const AZipFileName, AInternalName: string): integer;
 
 implementation
 
@@ -71,6 +75,101 @@ begin
   finally
     LZipFile.Free;
   end;
+end;
+
+procedure AddText2Zip(const AZipFileName, AInternalName, AText: string);
+var
+  LZip: TZipFile;
+  LFileName: string;
+  LSrcStream: TStringStream;
+begin
+  LSrcStream := TStringStream.Create(AText);
+  LZip := TZipFile.Create;
+  try
+    LZip.Open(AZipFileName, zmWrite);
+    LFileName := ExtractFileName(AInternalName);
+    LZip.Add(LSrcStream, LFileName);
+    LZip.Close;
+  finally
+    LZip.Free;
+    LSrcStream.Free;
+  end;
+end;
+
+procedure AddStream2Zip(const AZipFileName, AInternalName: string; AStream: TStream);
+var
+  LZip: TZipFile;
+  LFileName: string;
+begin
+  LZip := TZipFile.Create;
+  try
+    if FileExists(AZipFileName) then
+      LZip.Open(AZipFileName, zmReadWrite)
+    else
+      LZip.Open(AZipFileName, zmWrite);
+
+    LFileName := ExtractFileName(AInternalName);
+    LZip.Add(AStream, LFileName);
+    LZip.Close;
+  finally
+    LZip.Free;
+  end;
+end;
+
+function ExtractFile2StreamByName(const AZipFileName, AInternalName: string): TStringStream;
+var
+  LZip: TZipFile;
+  LFileName: string;
+  i: integer;
+begin
+  Result := nil;
+
+  if not FileExists(AZipFileName) then
+    exit;
+
+  LZip := TZipFile.Create;
+  try
+    LZip.Open(AZipFileName, zmReadWrite);
+
+    LFileName := ExtractFileName(AInternalName);
+    LZip.Read(AStream, LFileName);
+    LZip.Close;
+  finally
+    LZip.Free;
+  end;
+end;
+
+function GetIndexFromZipFile(const AZipFileName, AInternalName: string): integer;
+var
+  LZip: TZipFile;
+  LFileName: string;
+  i: integer;
+begin
+  Result := -1;
+
+  if not FileExists(AZipFileName) then
+    exit;
+
+  LZip := TZipFile.Create;
+  try
+    LZip.Open(AZipFileName, zmRead);
+
+    for i := 0 to LZip.FileCount - 1 do
+    begin
+      LFileName := LZip.FileNames[i];
+
+      if LFileName = AInternalName then
+      begin
+        Result := i;
+        Break;
+      end;
+    end;
+
+    LZip.Close;
+  finally
+    LZip.Free;
+  end;
+
 end;
 
 end.
