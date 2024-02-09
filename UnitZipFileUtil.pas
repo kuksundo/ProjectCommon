@@ -12,6 +12,8 @@ function IsValidZipFile(const AZipFileName: string): integer;
 procedure AddText2Zip(const AZipFileName, AInternalName, AText: string);
 procedure AddStream2Zip(const AZipFileName, AInternalName: string; AStream: TStream);
 function ExtractFile2StreamByName(const AZipFileName, AInternalName: string): TStringStream;
+function ExtractFile2StreamByNameFromOpenedZipFile(AZipFile: TZipFile; const AInternalName: string): TStringStream;
+function GetIndexFromOpenedZipFile(AZipFile: TZipFile; const AInternalName: string): integer;
 function GetIndexFromZipFile(const AZipFileName, AInternalName: string): integer;
 
 implementation
@@ -119,6 +121,7 @@ end;
 function ExtractFile2StreamByName(const AZipFileName, AInternalName: string): TStringStream;
 var
   LZip: TZipFile;
+  LocalHeader: TZipHeader;
   LFileName: string;
   i: integer;
 begin
@@ -130,20 +133,47 @@ begin
   LZip := TZipFile.Create;
   try
     LZip.Open(AZipFileName, zmReadWrite);
-
-    LFileName := ExtractFileName(AInternalName);
-    LZip.Read(AStream, LFileName);
-    LZip.Close;
+    Result := ExtractFile2StreamByNameFromOpenedZipFile(LZip, LFileName);
+    LZip.Close;
   finally
     LZip.Free;
+  end;
+end;
+
+function ExtractFile2StreamByNameFromOpenedZipFile(AZipFile: TZipFile; const AInternalName: string): TStringStream;
+var
+  LocalHeader: TZipHeader;
+  LFileName: string;
+  i: integer;
+begin
+//  Result := TStringStream.Create;
+  LFileName := ExtractFileName(AInternalName);
+  i := GetIndexFromOpenedZipFile(AZipFile, LFileName);
+  AZipFile.Read(i, TStream(Result), LocalHeader);  //Read 함수 내에서 TStream을 생성하여 반환함
+end;
+
+function GetIndexFromOpenedZipFile(AZipFile: TZipFile; const AInternalName: string): integer;
+var
+  i: integer;
+  LFileName: string;
+begin
+  Result := -1;
+
+  for i := 0 to AZipFile.FileCount - 1 do
+  begin
+    LFileName := AZipFile.FileNames[i];
+
+    if LFileName = AInternalName then
+    begin
+      Result := i;
+      Break;
+    end;
   end;
 end;
 
 function GetIndexFromZipFile(const AZipFileName, AInternalName: string): integer;
 var
   LZip: TZipFile;
-  LFileName: string;
-  i: integer;
 begin
   Result := -1;
 
@@ -153,23 +183,11 @@ begin
   LZip := TZipFile.Create;
   try
     LZip.Open(AZipFileName, zmRead);
-
-    for i := 0 to LZip.FileCount - 1 do
-    begin
-      LFileName := LZip.FileNames[i];
-
-      if LFileName = AInternalName then
-      begin
-        Result := i;
-        Break;
-      end;
-    end;
-
+    Result := GetIndexFromOpenedZipFile(LZip, AInternalName);
     LZip.Close;
   finally
     LZip.Free;
   end;
-
-end;
+end;
 
 end.

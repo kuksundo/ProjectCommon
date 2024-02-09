@@ -11,6 +11,8 @@ function ReadFormAsText(const DFMName:string; Form: TForm):TForm;
 procedure SaveToDFM(const FileName: string; ParentControl: TWinControl; AIsSaveToText: Boolean = False);
 function LoadFromDFM(const FileName: string; ParentControl: TWinControl;
   AProc: TReaderError): integer;
+function LoadDFMFromStream(AStream: TStream; ParentControl: TWinControl;
+  AProc: TReaderError): integer;
 procedure SaveToDFM2(const FileName: string; ParentControl: TWinControl);
 function LoadFromDFM2(const FileName: string; ParentControl: TWinControl): integer;
 procedure SaveBinDFM2TextDFM(const ABinFileName, ATextFileName: string;
@@ -275,6 +277,65 @@ begin
       end;
 
 //      Reader := TReader.Create(MemoryStream, 4096);
+    end;//sofText
+  end;//case
+end;
+
+function LoadDFMFromStream(AStream: TStream; ParentControl: TWinControl;
+  AProc: TReaderError): integer;
+var
+  MemoryStream: TMemoryStream;
+  StringStream: TStringStream;
+  Reader: TReader;
+  RealName: string;
+  LDFMFormat: TStreamOriginalFormat;
+begin
+  Result := 0;
+
+  MemoryStream := nil;
+
+  DeleteAllComponents(ParentControl);
+
+  LDFMFormat := CheckDFMFormatFromStream(AStream);
+
+  case LDFMFormat of
+    sofBinary, sofUnknown: begin
+      Reader := TReader.Create(AStream, 4096);
+
+      try
+        Reader.OnError := AProc;
+        // Save the parent's name, in case we are reading into a different
+        // control than we saved the diagram from
+        RealName := ParentControl.Name;
+        Reader.Root := ParentControl;//.Owner;
+        Reader.BeginReferences;
+        try
+          Reader.ReadComponent(ParentControl);
+        finally
+          if LDFMFormat <> sofText then
+          begin
+            Reader.FixupReferences;
+            Reader.EndReferences;
+          end;
+        end;
+        // Restore the parent's name
+        ParentControl.Name := RealName;
+      finally
+        Reader.Free;
+      end;
+    end;//sofBinary
+
+    sofText: begin
+      MemoryStream := TMemoryStream.Create;
+
+      try
+        ObjectTextToBinary(AStream, MemoryStream);
+        MemoryStream.Position := 0;
+        ParentControl := MemoryStream.ReadComponent(ParentControl) as TWinControl;
+      finally
+        if Assigned(MemoryStream) then
+          MemoryStream.Free;
+      end;
     end;//sofText
   end;//case
 end;
