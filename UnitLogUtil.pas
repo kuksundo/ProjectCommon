@@ -2,12 +2,16 @@ unit UnitLogUtil;
 
 interface
 
-uses System.Classes, System.Sysutils;
+uses System.Classes, System.Sysutils, Vcl.StdCtrls;
 
 procedure DoLogTextFile(const AFileName, ATxt: string);
 procedure DoLogTFileStream(const AFileName, ATxt: string);
+procedure DoLogMemo(const AMsg: string; AMemo: TMemo=nil);
 
 implementation
+
+const
+  MEMO_LOG_MAX_LINE_COUNT = 1000;
 
 procedure DoLogTextFile(const AFileName, ATxt: string);
 var
@@ -41,6 +45,14 @@ begin
   finally
     F.Free;
   end;
+end;
+
+procedure DoLogMemo(const AMsg: string; AMemo: TMemo=nil);
+begin
+  if AMemo.Lines.Count > MEMO_LOG_MAX_LINE_COUNT then
+    AMemo.Lines.Clear;
+
+  AMemo.Lines.Add(AMsg);
 end;
 
 end.
