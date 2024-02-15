@@ -93,15 +93,20 @@ end;
 
 function TLabelledEnum<T>.GetTypeLabels(ASkipNull: Boolean): TStrings;
 var
-  i: integer;
+  i, LCount: integer;
   LEnumGeneric: TEnumGeneric<T>;
 begin
   Result := TStringList.Create;
+  LCount := LEnumGeneric.Count - 1;
 
-  for i := 0 to LEnumGeneric.Count - 2 do
+  for i := 0 to LCount do
   begin
     if (ASkipNull) and (i = 0) then
       continue;
+
+    if (i = LCount) and (R_[i].Description = '') then
+      continue;
+
     Result.Add(R_[i].Description);
   end;
 end;
