@@ -22,7 +22,7 @@ procedure MoveRowUp(ANextGrid: TNextGrid);
 function ChangeRowColorByIndex(AGrid: TNextGrid; ARowIndex: integer; AColor: TColor): TColor;
 procedure CsvFile2NextGrid(ACsvFileName: string; ANextGrid: TNextGrid);
 
-implementation
+implementation
 
 uses UnitStringUtil;
 
