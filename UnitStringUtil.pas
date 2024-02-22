@@ -103,7 +103,7 @@ begin
   if I<>0 then
   begin
     Result:=System.Copy(S,I+1,Length(S));
-    System.Delete(S,1,I);
+    System.Delete(S,I,Length(S));
   end else
   begin
     Result:=S;
