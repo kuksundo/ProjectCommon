@@ -13,6 +13,7 @@ type
     class function GetAsStringFrom2Dimension(const AArr: array of TArray<T>) : string; static;
     procedure Append(const AValue: T);
     procedure Assign(const AArr: array of T);
+    procedure AssignFrom(const AArr: TArray<T>);
     function Count: integer;
     function ToString: string;
   end;
@@ -35,6 +36,16 @@ begin
 end;
 
 procedure TpjhArray<T>.Assign(const AArr: array of T);
+var
+  i: integer;
+begin
+  SetLength(ArrayData, 0);
+
+  for i := Low(AArr) to High(AArr) do
+    Append(AArr[i]);
+end;
+
+procedure TpjhArray<T>.AssignFrom(const AArr: TArray<T>);
 var
   i: integer;
 begin
