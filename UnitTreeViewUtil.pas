@@ -434,8 +434,11 @@ begin
 
         if AVisible then
         begin
+          ATV.SetFocus;
+          ATV.Selected := Result;
           Result.MakeVisible;
-  //        Result.Selected := True;
+//          Result.Selected := True;
+//          Result.Focused := True;
         end;
 
         Break;

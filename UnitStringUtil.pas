@@ -25,7 +25,7 @@ function NextPos2(SearchStr, Str : String; Position : integer) : integer;
 function PosRev(SubStr,s : string; IgnoreCase : boolean = false) : integer;
 function ExtractRelativePathBaseApplication(AApplicationPath, AFileNameWithPath: string): string;
 function InsertSymbols(s: string; c: Char; Position: Integer = 1): string;
-function AddThousandSeparator(S: string; Chr: Char): string;
+function AddThousandSeparator(S: string; Chr: Char=','): string;
 function IsValidGUID(const AGUID: string): boolean;
 function StringToCharSet(const AStr: string): TSysCharSet;
 function CharSetToString(const AChars: TSysCharSet): string;
