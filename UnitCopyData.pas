@@ -24,7 +24,7 @@ type
 
   PRecToPass = ^TRecToPass;
   TRecToPass = record
-    StrMsg : array[0..255] of char;
+    StrMsg : array[0..500] of char;
     StrSrcFormName : array[0..255] of char;
     iHandle : integer;
   end;
