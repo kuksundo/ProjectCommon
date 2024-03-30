@@ -164,7 +164,7 @@ begin
   LStrList := GetTypeLabels;
   try
     ACombo.Clear;
-    ACombo.Items := LStrList;
+    ACombo.Items.AddStrings(LStrList);
   finally
     LStrList.Free;
   end;
