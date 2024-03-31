@@ -7,6 +7,7 @@ uses Winapi.Windows, System.SysUtils, System.Classes, Winapi.Messages,
 
 const
   MSG_RESULT = WM_USER + 1000;
+  SENDMSG_RESULT = WM_USER + 1001;
 
 type
   TProcessResults = procedure of object;
