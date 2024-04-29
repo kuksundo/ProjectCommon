@@ -32,7 +32,7 @@ type
   public
     constructor create(ADesc: string; AControlKey: TShiftState; AEgg: string;
       Owner: TForm; AOnEasterEgg: TOnEasterEgg=nil);
-    destructor Destroy; overload;
+    destructor Destroy; override;
     function AddEgg2ObjDic(ADesc: string; AControlKey: TShiftState; AEgg: string;
       AOnEasterEgg: TOnEasterEgg=nil): Boolean;
     function GetEggListFromObjDic(AKey: Word; AShift: TShiftState): Boolean;
