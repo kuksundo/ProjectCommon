@@ -2,7 +2,11 @@ unit UnitResourceUtil;
 
 interface
 
+uses System.SysUtils, Vcl.Graphics;
+
 function GetResourceFromName(AResName: string): string;
+//AName : Bitmap File Name
+function GetBitmapFromFileName(const AName: string; var ABitmap: TBitmap): Boolean;
 
 implementation
 
@@ -16,6 +20,16 @@ begin
 //  finally
 //    LResStream.Free;
 //  end;
+end;
+
+function GetBitmapFromFileName(const AName: string; var ABitmap: TBitmap): Boolean;
+begin
+  Result := FileExists(AName);
+
+  if Result then
+  begin
+    ABitmap.LoadFromFile(AName);
+  end;
 end;
 
 end.

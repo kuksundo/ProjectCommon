@@ -166,10 +166,14 @@ var
   LStrList: TStringList;
 begin
   Result := '';
-  LStrList := FindAllFiles(foldername, filemask);
+  LStrList := FindAllFiles2(foldername, filemask);
 
-  if LStrList.Count > 0 then
-    Result := LStrList.Names[0];
+  try
+    if LStrList.Count > 0 then
+      Result := LStrList.Names[0];
+  finally
+    LStrList.Free;
+  end;
 end;
 
 //AExcludeFileDir: 원본 파일이 있는 Dir(SubDir포함)
