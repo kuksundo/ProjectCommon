@@ -166,7 +166,7 @@ uses
 //  xmldom,
 //  XMLIntf,
   UnitMouseUtil,
-  sndkey32;
+  sndkey32; //E:\pjh\project\OpenSrc\lib\DelphiDabbler
 
 var
   lg_DragStartPoint: TPoint;
