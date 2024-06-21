@@ -73,10 +73,9 @@ implementation
 
 function StrIsNumeric(s: string): Boolean;
 var
-  iValue, iCode: integer;
+  iValue: Int64;
 begin
-  Val(s, iValue, iCode);
-  Result := iCode = 0;
+  Result := TryStrToInt64(s, iValue);
 end;
 
 function strToken(var S: String; Seperator: Char): String;
