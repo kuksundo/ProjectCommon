@@ -23,6 +23,7 @@ procedure DisplayFormOnMultiMonitor(AForm: TForm; AMonitorIdx: integer);
 procedure ToggleFullScreenWidth(AForm: TForm; AMonitorIdx: integer);
 procedure SetWindowPos_JH(AHandle: THandle);
 procedure MakeTransparentForm(AForm: TForm; AAlpha: integer);
+
 //아래 함수는 UnitMouseUtil.pas로 이동함
 //function GetComponentUnderMouseCursor(AAllowDisabled: Boolean=True; AAllowWinControl: Boolean=True): TControl;
 
@@ -285,25 +286,5 @@ begin
   //폼에 Alpha 걊을 적용한다
   SetLayeredWindowAttributes(AForm.Handle, 0, Round((255 * 70) / 100), LWA_ALPHA);
 end;
-
-//function GetComponentUnderMouseCursor(AAllowDisabled: Boolean; AAllowWinControl: Boolean): TControl;
-//var
-//  LWindow: TWinControl;
-//  LControl: TControl;
-//  LPoint: TPoint;
-//begin
-//  Result := nil;
-//  LPoint := Mouse.CursorPos;
-//  LWindow := FindVCLWindow(LPoint);
-//
-//  if LWindow <> nil then
-//  begin
-//    Result := LWindow;
-//    LControl := LWindow.ControlAtPos(LWindow.ScreenToClient(LPoint), AAllowDisabled, AAllowWinControl);
-//
-//    if LControl <> nil then
-//      Result := LControl;
-//  end;
-//end;
 
 end.
