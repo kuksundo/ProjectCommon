@@ -33,6 +33,7 @@ procedure SetExcelColumnHeader(AWorksheet: OleVariant; AColName, ARange: string)
 procedure SetExcelColumnHeaderFromList(AWorksheet: OleVariant; AList: TStringList);
 function CheckExcelColumnHeader(AWorksheet: OleVariant; AColName, ARange: string): Boolean;
 function CheckExcelColumnHeaderFromList(AWorksheet: OleVariant; AList: TStringList): Boolean;
+function GetFileNameFromStream(const AStream: TStream): string;
 
 implementation
 
@@ -841,6 +842,24 @@ begin
 
     LChar := GetIncXLColumn(LChar);
   end;
+end;
+
+function GetFileNameFromStream(const AStream: TStream): string;
+var
+  LTempFileName: string;
+begin
+  LTempFileName := 'c:\Temp\Temp.xlsx';
+
+  AStream.Position := 0;
+
+  with TFileStream.Create(LTempFileName, fmCreate) do
+  try
+    CopyFrom(AStream, AStream.Size);
+  finally
+    Free;
+  end;
+
+  Result := LTempFileName;
 end;
 
 end.
