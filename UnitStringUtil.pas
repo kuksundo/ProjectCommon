@@ -45,7 +45,7 @@ function StrTokenUpcase(var S: String): string;
 function PosUpcase(const S: String): integer;
 function InsertCharAtUpcase(const S: string; Seperator: Char): string;
 
-function NewGUID: string;
+function NewGUID(const ARemoveBrace: Boolean=False; const ARemoveHypen: Boolean=False): string;
 function FormatByteString(Bytes: UInt64; Format: TByteStringFormat = bsfDefault): string;
 function IntToDot3Digit(AInt: integer): string;
 
@@ -241,12 +241,24 @@ begin
   result:=s;
 end;
 
-function NewGUID: string;
+function NewGUID(const ARemoveBrace: Boolean; const ARemoveHypen: Boolean): string;
 var
   Guid: TGUID;
 begin
   CreateGUID(Guid);
   Result := GUIDToString(Guid);
+
+  if ARemoveBrace then
+  begin
+    Result := Result.Replace('{', '');
+    Result := Result.Replace('}', '');
+  end;
+
+  if ARemoveHypen then
+  begin
+    Result := Result.Replace('-', '');
+  end;
+
 end;
 
 function AddThousandSeparator(S: string; Chr: Char): string;

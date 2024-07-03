@@ -25,6 +25,14 @@ type
     class function Cast(const Value: Integer): TEnum; static;
   end;
 
+  TEnumSet<TSet> = class
+  public
+    class function SetToInt(const ASet; const ASize: integer): integer;
+    class procedure IntToSet(const AValue: integer; var ASet; const ASize: integer);
+    class function SetValueToInt(ASet: TSet): integer; inline; static;
+    class procedure IntToSetValue(var AEnumSet; AInt: Integer); inline; static;
+  end;
+
   function EnumNameToTValue(EnumType: PTypeInfo; Name: string): TValue;
   function EnumOrdValueToTValue(EnumType: PTypeInfo; AOrdValue: Integer): TValue;
 
@@ -134,6 +142,35 @@ begin
     2: pWord(@Result)^ := Value;
     4: pCardinal(@Result)^ := Value;
   end;
+end;
+
+{ TEnumSet<TSet> }
+
+class procedure TEnumSet<TSet>.IntToSet(const AValue: integer; var ASet;
+  const ASize: integer);
+begin
+  Move(AValue, ASet, ASize);
+end;
+
+class procedure  TEnumSet<TSet>.IntToSetValue(var AEnumSet; AInt: Integer);
+var intSet : TIntegerSet;
+    b : byte;
+begin
+  intSet := TIntegerSet(AInt);
+
+  for b in intSet do
+    include(TIntegerSet(AEnumSet), b);
+end;
+
+class function TEnumSet<TSet>.SetToInt(const ASet;
+  const ASize: integer): integer;
+begin
+  Move(ASet, Result, ASize);
+end;
+
+class function TEnumSet<TSet>.SetValueToInt(ASet: TSet): integer;
+begin
+  Result := SetToInt(ASet, SizeOf(ASet));
 end;
 
 end.
