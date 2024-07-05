@@ -59,7 +59,7 @@ Type
     function ToType(AType: integer): T; overload;
     function ToOrdinal(AType: T): integer; overload;
     function ToOrdinal(AType: string): integer; overload;
-    Function GetTypeLabels(ASkipNull: Boolean = False): TStrings;
+    Function GetTypeLabels(ASkipNull: Boolean = False): TStringList;
     procedure SetType2Combo(ACombo: TComboBox);
     procedure SetType2List(AList: TStrings);
     function IndexInRange(AIndex: integer): Boolean;
@@ -91,7 +91,7 @@ begin
   FInitDone := False;
 end;
 
-function TLabelledEnum<T>.GetTypeLabels(ASkipNull: Boolean): TStrings;
+function TLabelledEnum<T>.GetTypeLabels(ASkipNull: Boolean): TStringList;
 var
   i, LCount: integer;
   LEnumGeneric: TEnumGeneric<T>;
