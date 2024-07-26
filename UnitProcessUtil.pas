@@ -25,6 +25,8 @@ function IsUACActive: Boolean;
 function IsRunningProcess( const ProcName: String ) : Boolean;
 function KillProcess(const ProcName: String): Boolean;
 function KillProcessId(const AProcId: THandle): Boolean;
+function GetConsoleOutput2(const Command : WideString;
+                          Output, Errors : TStrings) : Boolean;
 
 type
   TExecuteFileOption = (
@@ -432,6 +434,125 @@ begin
     CloseHandle(hProcess);
   end // if Process32.th32ProcessID<>0 end / / if Process32.th32ProcessID <> 0
   else Result:=False;// 프로세스 열기 실패 / / Process failed to open
+end;
+
+function GetConsoleOutput2(const Command : WideString;
+                          Output, Errors : TStrings) : Boolean;
+var
+  Buffer : array[0..2400] of AnsiChar;
+  BufferStrOutput : AnsiString;
+  BufferStrErrors : AnsiString;
+  CreationFlags : DWORD;
+  NumberOfBytesRead : DWORD;
+  PipeErrorsRead : THandle;
+  PipeErrorsWrite : THandle;
+  PipeOutputRead : THandle;
+  PipeOutputWrite : THandle;
+  ProcessInfo : TProcessInformation;
+  SecurityAttr : TSecurityAttributes;
+  StartupInfo : TStartupInfo;
+  tmpWaitR : DWORD;
+
+  procedure AddLine(var AString : AnsiString; ALines : TStrings);
+  var
+    i : integer;
+  begin
+    i := pos(#13#10, AString);
+    while i > 0 do begin
+      ALines.Add(copy(AString,1,i-1));
+      Delete(AString,1,i+1);
+      i := pos(#13#10, AString);
+    end;
+  end;
+
+begin
+  //Initialisierung ProcessInfo
+  FillChar(ProcessInfo, SizeOf(TProcessInformation), 0);
+
+  //Initialisierung SecurityAttr
+  FillChar(SecurityAttr, SizeOf(TSecurityAttributes), 0);
+  SecurityAttr.nLength := SizeOf(TSecurityAttributes);
+  SecurityAttr.bInheritHandle := True;
+  SecurityAttr.lpSecurityDescriptor := nil;
+
+  //Pipes erzeugen
+  CreatePipe(PipeOutputRead, PipeOutputWrite, @SecurityAttr, 0);
+  CreatePipe(PipeErrorsRead, PipeErrorsWrite, @SecurityAttr, 0);
+
+  //Initialisierung StartupInfo
+  FillChar(StartupInfo, SizeOf(TStartupInfo), 0);
+  StartupInfo.cb := SizeOf(TStartupInfo);
+  StartupInfo.hStdInput := 0;
+  StartupInfo.hStdOutput := PipeOutputWrite;
+  StartupInfo.hStdError := PipeErrorsWrite;
+  StartupInfo.wShowWindow := SW_HIDE;
+  StartupInfo.dwFlags := STARTF_USESHOWWINDOW or STARTF_USESTDHANDLES;
+
+  CreationFlags := CREATE_DEFAULT_ERROR_MODE or
+                   CREATE_NEW_CONSOLE or
+                   NORMAL_PRIORITY_CLASS;
+
+  result := CreateProcessW(nil, (PWideChar(Command)),
+                   nil,
+                   nil,
+                   True,
+                   CreationFlags,
+                   nil,
+                   nil,
+                   StartupInfo,
+                   ProcessInfo);
+  if result then begin
+    //Write-Pipes schließen
+    CloseHandle(PipeOutputWrite);
+    CloseHandle(PipeErrorsWrite);
+
+    BufferStrOutput := '';
+    BufferStrErrors := '';
+
+    repeat
+      tmpWaitR := WaitForSingleObject(ProcessInfo.hProcess, 100);
+
+      NumberOfBytesRead := 0;
+      //Ausgabe Read-Pipe auslesen
+      if PeekNamedPipe(PipeOutputRead, nil, 0, nil, @NumberOfBytesRead, nil) and (NumberOfBytesRead > 0) then begin
+        while ReadFile(PipeOutputRead, Buffer, Length(Buffer)-1, NumberOfBytesRead, nil) do begin
+          Buffer[NumberOfBytesRead] := #0;
+          OemToAnsi(Buffer, Buffer);
+          BufferStrOutput := BufferStrOutput + Buffer;
+          AddLine(BufferStrOutput,Output);
+          Application.ProcessMessages();
+        end;
+      end;
+
+      NumberOfBytesRead := 0;
+      if PeekNamedPipe(PipeErrorsRead, nil, 0, nil, @NumberOfBytesRead, nil) and (NumberOfBytesRead > 0) then begin
+        while ReadFile(PipeErrorsRead, Buffer, Length(Buffer)-1, NumberOfBytesRead, nil) do begin
+          Buffer[NumberOfBytesRead] := #0;
+          OemToAnsi(Buffer, Buffer);
+          BufferStrErrors := BufferStrErrors + Buffer;
+          AddLine(BufferStrErrors,Errors);
+          Application.ProcessMessages();
+        end;
+      end;
+
+      Application.ProcessMessages();
+    until (tmpWaitR <> WAIT_TIMEOUT);
+
+    if BufferStrOutput <> '' then Output.Add(BufferStrOutput);
+    if BufferStrErrors <> '' then Errors.Add(BufferStrErrors);
+
+    CloseHandle(ProcessInfo.hProcess);
+    CloseHandle(ProcessInfo.hThread);
+
+    CloseHandle(PipeOutputRead);
+    CloseHandle(PipeErrorsRead);
+  end else begin
+    //Pipes schließen
+    CloseHandle(PipeOutputRead);
+    CloseHandle(PipeOutputWrite);
+    CloseHandle(PipeErrorsRead);
+    CloseHandle(PipeErrorsWrite);
+  end;
 end;
 
 end.

@@ -9,7 +9,7 @@ procedure GridToExcel (GenericStringGrid :TStringGrid ; XLApp :TExcelApplication
 function GetIncXLColumn(AColChar: string): string;
 function GetDecXLColumn(AColChar: string): string;
 function GetExcelColumnAlphabetByInt(AIndex: integer): string;
-procedure NextGridToExcel(ANextGrid :TNextGrid; ASheetName: string = ''; ASaveFileName: string='');
+procedure NextGridToExcel(ANextGrid :TNextGrid; ASheetName: string = ''; ASaveFileName: string=''; ASkipHideRow: Boolean=True);
 //procedure Database2Excel(DbQuery: TQuery);
 //procedure ExcelToStrGrid(sFileName: String; svGrid: TStringGrid);
 //procedure DataSetToExcelFile(const Dataset: TDataset;const Filename: string);
@@ -153,12 +153,13 @@ begin
   end;
 end;
 
-procedure NextGridToExcel(ANextGrid :TNextGrid; ASheetName: string; ASaveFileName: string);
+procedure NextGridToExcel(ANextGrid :TNextGrid; ASheetName: string;
+  ASaveFileName: string; ASkipHideRow: Boolean);
 var
   XLApp :TExcelApplication;
   WorkBk : _WorkBook; //  Define a WorkBook
   WorkSheet : _WorkSheet; //  Define a WorkSheet
-  I, J, K, R, C, C2 : Integer;
+  I, J, K, R, C, C2, M: Integer;
   IIndex : OleVariant;
   LRange: ExcelRange;
   TabGrid : Variant;
@@ -181,15 +182,23 @@ begin
     TabGrid := VarArrayCreate([0,(R - 1),0,(C - 1)],VarOleStr);
     C2 := ANextGrid.Columns.Count;
     I := 0;
+    M := 0;
     //  Define the loop for filling in the Variant
     repeat
       K := 0;
+
+      if ASkipHideRow and (not ANextGrid.Row[I].Visible) then
+      begin
+        Inc(I);
+        continue;
+      end;
+
       for J := 0 to (C2 - 1) do
       begin
         if ANextGrid.Columns.Item[J].Visible then
         begin
           LStr := ANextGrid.Cells[J,I];
-          TabGrid[I,K] := LStr;
+          TabGrid[M,K] := LStr;
           Inc(K);
           LLength := Length(LStr);
           //Cell 내용이 가장 긴 것 저장함
@@ -198,6 +207,7 @@ begin
         end;
       end;
       Inc(I,1);
+      Inc(M);
     until I > (R - 1);
 
 //    LCID := GetUserDefaultLCID;

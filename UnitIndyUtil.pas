@@ -3,7 +3,8 @@ unit UnitIndyUtil;
 interface
 
 uses System.SysUtils, Classes,
-  IdCTypes, IdHTTP, IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders, IdURI, IdGlobal;
+  IdCTypes, IdHTTP, IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders, IdURI, IdGlobal,
+  IdIOHandler;
 
 function HttpStart_Id(ARoot, AIpAddr, APort: string): boolean;
 procedure HttpStop_Id;
@@ -13,6 +14,8 @@ function HttpsGet_Id(pURL, pAuthorization: String): String;
 function HttpsPost_Id(pURL, sParam1, sParam2, pAuthorization: String): String;
 function GetUrlParams_Id(AUrl: string): TStringList;
 function MakeUrlFromParam_Id(AParams: TStringList): string;
+function IdBytesToString(const ABytes: TIdBytes): string;
+procedure CopyInputBuffer(Comment: string; Source, Dest: TIdIOHandler);
 
 var
   g_HTTPClient_Id: TIdHTTP;
@@ -223,6 +226,31 @@ begin
     LUri.Free;
   end;
 
+end;
+
+function IdBytesToString(const ABytes: TIdBytes): string;
+var
+  i: integer;
+begin
+  Result := '';
+
+  for i := 0 to Length(ABytes) - 1 do
+    Result := Result + Char(ABytes[i]);
+end;
+
+procedure CopyInputBuffer(Comment: string; Source, Dest: TIdIOHandler);
+var
+  Stream: TMemoryStream;
+begin
+  Stream := TMemoryStream.Create;
+  try
+    Source.InputBufferToStream(Stream);
+    Stream.Position := 0;
+    Dest.Write(Stream, Stream.Size);
+//    Log(Comment + ' ' + IntToStr(Stream.Size) + ' bytes');
+  finally
+    FreeAndNil(Stream);
+  end;
 end;
 
 end.
