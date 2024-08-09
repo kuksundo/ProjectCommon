@@ -36,6 +36,9 @@ function GetSecTohhnnss(ASec: double): string;
 //두 날짜의 차이를 00년00월00일 형식으로 반환(입사일과 퇴사일을 주면 근무일수를 년월일 형식으로 표시함)
 procedure GetyymmddBetweenDate(AFrom, ATo: TDate; var Ayy, Amm, Add: word);
 function DateTimeToMilliseconds(ADT: TDateTime): int64;
+//시작일자 + 만료 개월수를 입력
+//만료일자를 반환함
+function GetExpireDateFromStartDateByMonth(AStartDate: TDate; ANumOfMonth: integer): TDate;
 
 var pjhShortMonthNames : array[1..12] of string =
   ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
@@ -284,6 +287,11 @@ asm // faster version by AB
        sbb   edx,0
   @@1: div   ecx
        mov   eax,edx // we only need ttimestamp.time = Milli Seconds count
+end;
+
+function GetExpireDateFromStartDateByMonth(AStartDate: TDate; ANumOfMonth: integer): TDate;
+begin
+  Result := IncMonth(AStartDate, ANumOfMonth);
 end;
 
 end.
