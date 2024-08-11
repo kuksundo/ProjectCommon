@@ -10,6 +10,7 @@ procedure SaveClipboardFormat(fmt: Word; writer: TWriter);
 procedure LoadClipboardFormat(reader: TReader);
 procedure SaveClipboardToStream(S: TStream);
 procedure LoadClipboardFromStream(S: TStream);
+procedure Content2Clipboard(AContent: string);
 
 implementation
 
@@ -164,5 +165,10 @@ begin
      reader.Free
    end; { Finally }
 end; { LoadClipboard }
+
+procedure Content2Clipboard(AContent: string);
+begin
+  Clipboard.AsText := AContent;
+end;
 
 end.
