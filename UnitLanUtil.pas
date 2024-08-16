@@ -18,6 +18,7 @@ Function FindAllWorkgroups(List: Pointer) : Boolean;
 procedure WakeOnLan1(AMACAddr: string);
 procedure WakeOnLan2(const AMacAddress: string);
 procedure WakeOnLan3(AMACAddr: string);
+function PingHost(const AHostName: string; ATimeout: cardinal=500): Boolean;
 
 implementation
 
@@ -431,4 +432,12 @@ begin
   end;
 end;
 
+function PingHost(const AHostName: string; ATimeout: cardinal=500): Boolean;
+type
+  function IcmpCreateFile: THandle; stdcall; external 'iphlpapi.dll';
+begin
+
+end;
+
 end.
+
