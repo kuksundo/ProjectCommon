@@ -34,8 +34,11 @@ procedure SetExcelColumnHeaderFromList(AWorksheet: OleVariant; AList: TStringLis
 function CheckExcelColumnHeader(AWorksheet: OleVariant; AColName, ARange: string): Boolean;
 function CheckExcelColumnHeaderFromList(AWorksheet: OleVariant; AList: TStringList): Boolean;
 function GetFileNameFromStream(const AStream: TStream): string;
+procedure SetValueCheckBoxByNameOnWorkSheet(AWorksheet: OleVariant; ACBName: string; AIsCheck: Boolean);
 
 implementation
+
+uses UnitMiscUtil;
 
 //StringGrid의 내용을 MSExcel에 넣어주는 함수
 //TExcelApplication의 ConnectKind Property 를 ckNewInstance로 설정해야함
@@ -283,11 +286,11 @@ begin
     end;
     // Disconnect the Server
     XLApp.Disconnect;
+    XLApp.Free;
     // Unassign the Delphi Variant Matrix
     TabGrid := Unassigned;
   end;
 end;
-
 
 //procedure Database2Excel(DbQuery: TQuery);
 //var XApp:Variant;
@@ -870,6 +873,30 @@ begin
   end;
 
   Result := LTempFileName;
+end;
+
+procedure SetValueCheckBoxByNameOnWorkSheet(AWorksheet: OleVariant; ACBName: string; AIsCheck: Boolean);
+var
+  LCheckBox: OLEVariant;
+  i: integer;
+begin
+//  LCheckBox := AWorkSheet.OLEObjects[ACBName].Object;
+  LCheckBox := AWorkSheet.Shapes[ACBName].OLEFormat.Object;
+//  LCheckBox := AWorkSheet.Shapes.Item(3).OLEFormat.Object;
+//  LCheckBox := AWorkSheet.Shapes[ACBName];
+
+//  for i := 1 to AWorkSheet.OLEObjects.Count do
+//  for i := 1 to AWorkSheet.Shapes.Count do
+//  begin
+//    LCheckBox := AWorkSheet.Shapes.Item(i);
+    ACBName := LCheckBox.Name;
+//  end;
+//    LCheckBox := i;
+
+//  LCheckBox := AWorkSheet.Shapes.Item(1);
+
+  if not VarIsNull(LCheckBox) then
+    LCheckBox.Value := BoolToInt(AIsCheck);
 end;
 
 end.

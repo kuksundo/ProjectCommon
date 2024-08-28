@@ -23,6 +23,7 @@ procedure DisplayFormOnMultiMonitor(AForm: TForm; AMonitorIdx: integer);
 procedure ToggleFullScreenWidth(AForm: TForm; AMonitorIdx: integer);
 procedure SetWindowPos_JH(AHandle: THandle);
 procedure MakeTransparentForm(AForm: TForm; AAlpha: integer);
+procedure WindowShake(wHandle: THandle) ;
 
 //아래 함수는 UnitMouseUtil.pas로 이동함
 //function GetComponentUnderMouseCursor(AAllowDisabled: Boolean=True; AAllowWinControl: Boolean=True): TControl;
@@ -285,6 +286,39 @@ begin
   SetWindowLong(AForm.Handle, GWL_EXSTYLE, GetWindowLong(AForm.Handle, GWL_EXSTYLE) or WS_EX_LAYERED);
   //폼에 Alpha 걊을 적용한다
   SetLayeredWindowAttributes(AForm.Handle, 0, Round((255 * 70) / 100), LWA_ALPHA);
+end;
+
+procedure WindowShake(wHandle: THandle) ;
+const
+  MAXDELTA = 2;
+  SHAKETIMES = 500;
+var
+  oRect, wRect :TRect;
+  deltax : integer;
+  deltay : integer;
+  cnt : integer;
+  dx, dy : integer;
+begin
+  //remember original position
+  GetWindowRect(wHandle,wRect) ;
+  oRect := wRect;
+
+  Randomize;
+  for cnt := 0 to SHAKETIMES do
+  begin
+    deltax := Round(Random(MAXDELTA)) ;
+    deltay := Round(Random(MAXDELTA)) ;
+    dx := Round(1 + Random(2)) ;
+    if dx = 2 then dx := -1;
+    dy := Round(1 + Random(2)) ;
+    if dy = 2 then dy := -1;
+    OffsetRect(wRect,dx * deltax, dy * deltay) ;
+    MoveWindow(wHandle, wRect.Left,wRect.Top,wRect.Right - wRect.Left,wRect.Bottom - wRect.Top,true) ;
+    Application.ProcessMessages;
+  end;
+
+  //return to start position
+  MoveWindow(wHandle, oRect.Left,oRect.Top,oRect.Right - oRect.Left,oRect.Bottom - oRect.Top,true) ;
 end;
 
 end.
