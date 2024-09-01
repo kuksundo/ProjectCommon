@@ -12,8 +12,8 @@ uses Classes, Psapi, Windows, tlhelp32, SysUtils, Registry;
     exitprocess(0);
   end;
 }
-function GetTheParentProcessFileName(): String;
 function KillTask(ExeFileName: string): Integer;
+function GetTheParentProcessFileName(): String;
 procedure EnumComPorts(const Ports: TStringList);
 function RunAsAdmin(Window; HWND; FileName: string; Parameters: string): Boolean;
 function NTSetPrivilege(APrivilege: string; AEnabled: Boolean): Boolean;
