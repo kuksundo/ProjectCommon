@@ -16,14 +16,15 @@ object InputEditF: TInputEditF
   PixelsPerInch = 96
   TextHeight = 16
   object Label1: TLabel
-    Left = 48
+    Left = 64
     Top = 24
     Width = 72
     Height = 16
+    Alignment = taRightJustify
     Caption = 'Invoice No.: '
   end
   object InputEdit: TEdit
-    Left = 126
+    Left = 142
     Top = 21
     Width = 203
     Height = 24

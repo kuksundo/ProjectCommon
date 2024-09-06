@@ -2,7 +2,7 @@ unit UnitClipBoardUtil;
 
 interface
 
-uses System.Classes, System.SysUtils, WinApi.Windows, clipbrd;
+uses System.Classes, System.SysUtils, WinApi.Windows, clipbrd, Vcl.StdCtrls;
 
 procedure CopyStreamToClipboard(fmt: Cardinal; S: TStream);
 procedure CopyStreamFromClipboard(fmt: Cardinal; S: TStream);
