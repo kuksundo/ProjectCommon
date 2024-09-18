@@ -37,6 +37,7 @@ type
   TExecuteFileOptions = set of TExecuteFileOption;
 
 function ExecuteFile(Handle: HWND; const Filename, Paramaters: String; Options: TExecuteFileOptions): Integer;
+procedure RunPowerShellCommand(Command: string);
 
 implementation
 
@@ -553,6 +554,15 @@ begin
     CloseHandle(PipeErrorsRead);
     CloseHandle(PipeErrorsWrite);
   end;
+end;
+
+procedure RunPowerShellCommand(Command: string);
+var
+  PowerShellCmd: string;
+begin
+  PowerShellCmd := 'powershell.exe -Command ' + Command;
+
+  ShellExecute(0, 'open', 'powershell.exe', PChar('-Command ' + Command), nil, SW_HIDE);
 end;
 
 end.

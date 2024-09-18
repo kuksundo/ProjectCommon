@@ -39,6 +39,8 @@ function DateTimeToMilliseconds(ADT: TDateTime): int64;
 //시작일자 + 만료 개월수를 입력
 //만료일자를 반환함
 function GetExpireDateFromStartDateByMonth(AStartDate: TDate; ANumOfMonth: integer): TDate;
+//DateTimeToUnix(value, False)와 동일함
+function DateTimeToUnixNoUTC(const AValue: TDateTime): Int64;
 
 var pjhShortMonthNames : array[1..12] of string =
   ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
@@ -292,6 +294,14 @@ end;
 function GetExpireDateFromStartDateByMonth(AStartDate: TDate; ANumOfMonth: integer): TDate;
 begin
   Result := IncMonth(AStartDate, ANumOfMonth);
+end;
+
+function DateTimeToUnixNoUTC(const AValue: TDateTime): Int64;
+var
+  LDate: TDateTime;
+begin
+  LDate := TTimeZone.Local.ToUniversalTime(AValue);
+  Result := DateTimeToUnix(LDate);
 end;
 
 end.

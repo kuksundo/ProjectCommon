@@ -285,9 +285,9 @@ begin
       XLApp.Quit;
     end;
     // Disconnect the Server
+    // Unassign the Delphi Variant Matrix
     XLApp.Disconnect;
     XLApp.Free;
-    // Unassign the Delphi Variant Matrix
     TabGrid := Unassigned;
   end;
 end;

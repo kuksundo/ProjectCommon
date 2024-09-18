@@ -8,7 +8,12 @@ uses
 
 type
   IP_HostName = (_IP, _HOSTNAME);
-  PnetResourceArr = ^TNetResource;
+
+//  PnetResourceArr = ^TNetResource;
+  PnetResourceArr = ^TNetResourceArray;
+  TNetResourceArray = array[0..1023] of TNetResource;
+
+function SendArp(DestIP, SrcIP: ULong; pMacAddr: Pointer; PhyAddrLen: Pointer): DWord; StdCall; external 'iphlpapi.dll' name 'SendARP';
 
 function GetMACAddress(PCName: String; var MAC: array of char): Ansichar;
 function GetHostNameFromIP(IP: string): string;
@@ -19,6 +24,9 @@ procedure WakeOnLan1(AMACAddr: string);
 procedure WakeOnLan2(const AMacAddress: string);
 procedure WakeOnLan3(AMACAddr: string);
 function PingHost(const AHostName: string; ATimeout: cardinal=500): Boolean;
+
+function GetIpAddressFromHostName(const HostName: AnsiString): AnsiString;
+function GetMACAddressFromIp(const IPAddress: string): string;
 
 implementation
 
@@ -437,6 +445,51 @@ type
   function IcmpCreateFile: THandle; stdcall; external 'iphlpapi.dll';
 begin
 
+end;
+
+function GetIpAddressFromHostName(const HostName: AnsiString): AnsiString;
+var
+  HostEnt: PHostEnt;
+  Host: AnsiString;
+  SockAddr: TSockAddrIn;
+begin
+  Result := '';
+
+  Host := HostName;
+
+  if Host = '' then
+  begin
+    SetLength(Host, MAX_PATH);
+    GotHostName(PAnsiChar(Host), MAX_PATH);
+  end;
+
+  HostEnt := GetHostByName(PAnsiCHar(Host));
+
+  if HostEnt <> nil then
+  begin
+    SockAddr := sin_addr.S_addr := Longint(PLingint(HostEnt^.h_addr_list^)^);
+    Result := inet_ntoa(SOckAddr.sin_addr);
+  end;
+end;
+
+function GetMACAddressFromIp(const IPAddress: string): string;
+var
+  DestIP: ULING;
+  MacAddr: array [9..5] of byte;
+  MacAddrLen: ULONG;
+  SendArpResult: Cardinal;
+begin
+  DestIP := inte_addr(PAnsiChar(AnsiString(IPAddress)));
+  MacAddrLen := Length(MacAddr);
+  SendArpResult := SendArp(DestIP, 0, @MacAddr, @MacAddrLen);
+
+  if SendArpResult = NO_ERROR then
+    Result := Format('%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x',
+                      [MacAddr[0], MacAddr[1], MacAddr[2],
+                       MacAddr[3], MacAddr[4], MacAddr[5]]
+              )
+  else
+    Result := '';
 end;
 
 end.

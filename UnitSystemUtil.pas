@@ -2,7 +2,7 @@ unit UnitSystemUtil;
 
 interface
 
-uses Classes, Psapi, Windows, tlhelp32, SysUtils, Registry;
+uses Classes, Psapi, Windows, tlhelp32, SysUtils, Registry, ShellAPI;
 
 {Ex:
   if (AnsiLowerCase(ExtractFileName(GetTheParentProcessFileName)) <> 'explorer.exe') and
@@ -15,8 +15,10 @@ uses Classes, Psapi, Windows, tlhelp32, SysUtils, Registry;
 function KillTask(ExeFileName: string): Integer;
 function GetTheParentProcessFileName(): String;
 procedure EnumComPorts(const Ports: TStringList);
-function RunAsAdmin(Window; HWND; FileName: string; Parameters: string): Boolean;
+function RunAsAdmin(AWindow: HWND; FileName: string; Parameters: string): Boolean;
 function NTSetPrivilege(APrivilege: string; AEnabled: Boolean): Boolean;
+function IsWindowsAutoLoginEnabled: Boolean;
+function IsWindowsPasswordLessEnabled: Boolean;
 
 implementation
 
@@ -126,16 +128,16 @@ begin  { EnumComPorts }
   end;
 end { EnumComPorts };
 
-function RunAsAdmin(Window; HWND; FileName: string; Parameters: string): Boolean;
+function RunAsAdmin(AWindow: HWND; FileName: string; Parameters: string): Boolean;
 var
   ShellExeInfo: TShellExecuteInfo;
 begin
   ZeroMemory(@ShellExeInfo, SizeOf(ShellExeInfo));
   ShellExeInfo.cbSize := SizeOf(TShellExecuteInfo);
-  ShellExeInfo.Wnd := Window;
+  ShellExeInfo.Wnd := AWindow;
   ShellExeInfo.fMask := SEE_MASK_FLAG_DDEWAIT or SEE_MASK_FLAG_NO_UI;
   ShellExeInfo.lpVerb := PChar('runas');
-  ShellExeInfo.lpFile := PChar(FileNmae);
+  ShellExeInfo.lpFile := PChar(FileName);
   ShellExeInfo.lpParameters := PChar(Parameters);
   ShellExeInfo.nShow := SW_SHOWNORMAL;
   Result := ShellExecuteEx(@ShellExeInfo);
@@ -153,15 +155,15 @@ begin
   Result := True;
   errval := 0;
   //Only for windows NT/2000/XP and later
-  if not (Win32Platform = VERPLATFORM_WIN32_NT then exit;
+  if not (Win32Platform = VER_PLATFORM_WIN32_NT) then exit;
 
   Result := False;
   //Obtain the processes token
   if OpenProcessToken(GetCurrentProcess(),
-    TOKEN_ADJUST_PRIVILEGES or TOKEN_QUREY, hToken) then
+    TOKEN_ADJUST_PRIVILEGES or TOKEN_QUERY, hToken) then
     try
       //Get the locally unique identifier(LUID)
-      if LookupPrivilegeValue(nil, PChar(APrivilege), TokenPriv.Privileges[0].Luid then
+      if LookupPrivilegeValue(nil, PChar(APrivilege), TokenPriv.Privileges[0].Luid) then
       begin
         TokenPriv.PrivilegeCount := 1; //one privilege to set
         case AEnabled of
@@ -172,7 +174,7 @@ begin
         ReturnLength := 0; //replaces a var parameter
         PrevTokenPriv := TokenPriv;
         //enable or disable the privilege
-        if AdjustTokenPrivileges(hToken, False, TokenPriv, SizeOf(ProvTokenPriv), PrevTokenPriv, ReturnLength) then
+        if AdjustTokenPrivileges(hToken, False, TokenPriv, SizeOf(PrevTokenPriv), PrevTokenPriv, ReturnLength) then
           Result := True
         else
         begin
@@ -187,7 +189,57 @@ begin
     //test the return value of AdjustTokenPrivileges.
     //Result := GetLastError = ERROR_SUCCESS;
     if not Result then
-      reise Exception.Create(SysErrorMessage(errval));
+      raise Exception.Create(SysErrorMessage(errval));
+end;
+
+function IsWindowsAutoLoginEnabled: Boolean;
+var
+  Reg: TRegistry;
+  AutoAdminLogon: string;
+begin
+  Result := False;
+  Reg := TRegistry.Create(KEY_READ);
+  try
+    Reg.RootKey := HKEY_LOCAL_MACHINE;
+    // Open the Winlogon key in the registry
+    if Reg.OpenKeyReadOnly('SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon') then
+    begin
+      // Check if AutoAdminLogon is set to '1' (enabled)
+      if Reg.ValueExists('AutoAdminLogon') then
+      begin
+        AutoAdminLogon := Reg.ReadString('AutoAdminLogon');
+        Result := AutoAdminLogon = '1';
+      end;
+      Reg.CloseKey;
+    end;
+  finally
+    Reg.Free;
+  end;
+end;
+
+function IsWindowsPasswordLessEnabled: Boolean;
+var
+  Reg: TRegistry;
+  AutoAdminLogon: string;
+begin
+  Result := False;
+  Reg := TRegistry.Create(KEY_READ);
+  try
+    Reg.RootKey := HKEY_LOCAL_MACHINE;
+
+    if Reg.OpenKeyReadOnly('SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device') then
+    begin
+      // Check if DevicePasswordLessBuildVersion is set to '0' (enabled)
+      if Reg.ValueExists('DevicePasswordLessBuildVersion') then
+      begin
+        AutoAdminLogon := Reg.ReadString('DevicePasswordLessBuildVersion');
+        Result := AutoAdminLogon = '0';
+      end;
+      Reg.CloseKey;
+    end;
+  finally
+    Reg.Free;
+  end;
 end;
 
 end.

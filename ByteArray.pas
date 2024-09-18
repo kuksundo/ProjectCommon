@@ -70,6 +70,8 @@ type
     property CStrFrom[Index : LongInt] : Pointer read GetCStrFrom;
   end;
 
+function Int64ToByteArray(Value: Int64): TBytes;
+
 implementation
 
 constructor TByteArray2.Create(InitialSize : LongInt = 0);
@@ -687,6 +689,12 @@ begin
       end;
     end;//if
   end;//if
+end;
+
+function Int64ToByteArray(Value: Int64): TBytes;
+begin
+  SetLength(Result, SizeOf(Int64)); // 8바이트 배열로 크기 설정
+  Move(Value, Result[0], SizeOf(Int64)); // Value의 메모리 내용을 Result로 복사
 end;
 
 end.

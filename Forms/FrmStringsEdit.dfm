@@ -22,8 +22,8 @@ object pjhStringsEditorDlg: TpjhStringsEditorDlg
     Align = alBottom
     TabOrder = 0
     object btnOk: TButton
-      Left = 265
-      Top = 5
+      Left = 489
+      Top = 6
       Width = 75
       Height = 25
       Caption = '&OK'
@@ -32,8 +32,8 @@ object pjhStringsEditorDlg: TpjhStringsEditorDlg
       TabOrder = 0
     end
     object btnCancel: TButton
-      Left = 345
-      Top = 5
+      Left = 209
+      Top = 6
       Width = 75
       Height = 25
       Cancel = True
