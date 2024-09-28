@@ -41,6 +41,10 @@ function DateTimeToMilliseconds(ADT: TDateTime): int64;
 function GetExpireDateFromStartDateByMonth(AStartDate: TDate; ANumOfMonth: integer): TDate;
 //DateTimeToUnix(value, False)와 동일함
 function DateTimeToUnixNoUTC(const AValue: TDateTime): Int64;
+//분을 시간과 남은 분으로 표시(2:30)
+function GetHhnnFromMinute(const AMin: integer): string;
+//분을 시간.분으로 표시(2.5)
+function GetHhCommannFromMinute(const AMin: integer): string;
 
 var pjhShortMonthNames : array[1..12] of string =
   ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec');
@@ -302,6 +306,25 @@ var
 begin
   LDate := TTimeZone.Local.ToUniversalTime(AValue);
   Result := DateTimeToUnix(LDate);
+end;
+
+function GetHhnnFromMinute(const AMin: integer): string;
+var
+  LHour, LRemainMin: integer;
+begin
+  LHour := AMin div 60;
+  LRemainMin := AMin mod 60;
+
+  Result := Format('%d.2d:%.2d', [LHour, LRemainMin]);
+end;
+
+function GetHhCommannFromMinute(const AMin: integer): string;
+var
+  LHour: Double;
+begin
+  LHour := AMin / 60;
+
+  Result := FormatFloat('0.0', LHour);
 end;
 
 end.

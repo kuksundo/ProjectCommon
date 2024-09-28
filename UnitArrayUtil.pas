@@ -5,6 +5,9 @@ interface
 uses Windows, sysutils, classes, Generics.Collections, System.TypInfo, System.Rtti;
 
 type
+  TAnsiArray = array of AnsiChar;
+  TCharArray = array of Char;
+
   TpjhArray<T> = record
     ArrayData: array of T;
 
@@ -22,6 +25,9 @@ type
   function FindMissingNumbers(const ANumbers: TArray<Integer>;
     var AStartIndex: integer): TArray<Integer>;
   function FindMissingNumbers2List(const ANumbers: TArray<Integer>): TStringList;
+
+  function ArrayOfCharToString(const ACharAry: array of char): string;
+  function StringToArrayOfChar(const Astring: string): TCharArray;
 
 implementation
 
@@ -176,6 +182,24 @@ begin
       Inc(LCount);
     end;
   end;//for
+end;
+
+function ArrayOfCharToString(const ACharAry: array of char): string;
+begin
+  if Length(ACharAry) > 0 then
+    SetString(Result, PChar(@ACharAry[0]), Length(ACharAry))
+  else
+    Result := '';
+end;
+
+function StringToArrayOfChar(const Astring: string): TCharArray;
+var
+  i: integer;
+begin
+  SetLength(Result, Length(AString));
+
+  for i := 1to Length(AString) do
+    Result[i-1] := AString[i];
 end;
 
 end.

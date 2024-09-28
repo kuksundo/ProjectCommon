@@ -4,7 +4,7 @@ interface
 
 uses Classes, System.Zip, System.ZLib;
 
-function ZCompressString(aText: string; aCompressionLevel: TZCompressionLevel): string;
+function ZCompressString(aText: string; aCompressionLevel: TZCompressionLevel=zcFastest): string;
 function ZDecompressString(aText: string): string;
 
 implementation
@@ -43,7 +43,9 @@ begin
   strInput := TStringStream.Create(aText);
   strOutput := TStringStream.Create;
   try
-    UnZipper := TZDeCompressionStream.Create(strInput);
+    strInput.Position := 0;
+
+    UnZipper := TZDeCompressionStream.Create(strInput, 15);
     try
       strOutput.CopyFrom(UnZipper, UnZipper.Size);
     finally
