@@ -7,6 +7,7 @@ uses Winapi.Windows, classes, SysUtils, Forms;
 function GetFindFileList(filemask: string; IncludePath: boolean=True): TStringList;
 function WindowsFindFileList(filemask: string; showFiles, showFolders, fullPath: boolean): TStringList;
 function GetFileSize(szFile: PChar): Int64;
+//Result: filename = filesize list ¹ÝÈ¯
 function FindAllFiles(RootFolder: string; Mask: string = '*.*';
   Recurse: Boolean = True; ExcludeDir: string = ''): TStringList;
 function FindAllFiles2(RootFolder: string; Mask: string = '*.*'): TStringList;

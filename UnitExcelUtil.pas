@@ -9,7 +9,8 @@ procedure GridToExcel (GenericStringGrid :TStringGrid ; XLApp :TExcelApplication
 function GetIncXLColumn(AColChar: string): string;
 function GetDecXLColumn(AColChar: string): string;
 function GetExcelColumnAlphabetByInt(AIndex: integer): string;
-procedure NextGridToExcel(ANextGrid :TNextGrid; ASheetName: string = ''; ASaveFileName: string=''; ASkipHideRow: Boolean=True);
+procedure NextGridToExcel(ANextGrid :TNextGrid; ASheetName: string = '';
+  ASaveFileName: string=''; ASkipHideColumn: Boolean=True);
 //procedure Database2Excel(DbQuery: TQuery);
 //procedure ExcelToStrGrid(sFileName: String; svGrid: TStringGrid);
 //procedure DataSetToExcelFile(const Dataset: TDataset;const Filename: string);
@@ -35,6 +36,7 @@ function CheckExcelColumnHeader(AWorksheet: OleVariant; AColName, ARange: string
 function CheckExcelColumnHeaderFromList(AWorksheet: OleVariant; AList: TStringList): Boolean;
 function GetFileNameFromStream(const AStream: TStream): string;
 procedure SetValueCheckBoxByNameOnWorkSheet(AWorksheet: OleVariant; ACBName: string; AIsCheck: Boolean);
+function CheckWorksheetExistByName(AWorkBook: OleVariant; ASheetName: string): Boolean;
 
 implementation
 
@@ -157,7 +159,7 @@ begin
 end;
 
 procedure NextGridToExcel(ANextGrid :TNextGrid; ASheetName: string;
-  ASaveFileName: string; ASkipHideRow: Boolean);
+  ASaveFileName: string; ASkipHideColumn: Boolean);
 var
   XLApp :TExcelApplication;
   WorkBk : _WorkBook; //  Define a WorkBook
@@ -180,7 +182,12 @@ begin
   begin
     IIndex := 1;
     R := ANextGrid.RowCount;
-    C := ANextGrid.Columns.VisibleCount;
+
+    if ASkipHideColumn then
+      C := ANextGrid.Columns.VisibleCount
+    else
+      C := ANextGrid.Columns.Count;
+
     // Create the Variant Array
     TabGrid := VarArrayCreate([0,(R - 1),0,(C - 1)],VarOleStr);
     C2 := ANextGrid.Columns.Count;
@@ -190,24 +197,26 @@ begin
     repeat
       K := 0;
 
-      if ASkipHideRow and (not ANextGrid.Row[I].Visible) then
-      begin
-        Inc(I);
-        continue;
-      end;
+//      if ASkipHideRow and (not ANextGrid.Row[I].Visible) then
+//      begin
+//        Inc(I);
+//        continue;
+//      end;
 
       for J := 0 to (C2 - 1) do
       begin
-        if ANextGrid.Columns.Item[J].Visible then
+        if (ASkipHideColumn) and (not ANextGrid.Columns.Item[J].Visible) then
         begin
-          LStr := ANextGrid.Cells[J,I];
-          TabGrid[M,K] := LStr;
-          Inc(K);
-          LLength := Length(LStr);
-          //Cell 내용이 가장 긴 것 저장함
-          if ANextGrid.Columns.Item[J].Tag < LLength then
-             ANextGrid.Columns.Item[J].Tag := LLength;
+          Continue;
         end;
+
+        LStr := ANextGrid.Cells[J,I];
+        TabGrid[M,K] := LStr;
+        Inc(K);
+        LLength := Length(LStr);
+        //Cell 내용이 가장 긴 것 저장함
+        if ANextGrid.Columns.Item[J].Tag < LLength then
+           ANextGrid.Columns.Item[J].Tag := LLength;
       end;
       Inc(I,1);
       Inc(M);
@@ -897,6 +906,22 @@ begin
 
   if not VarIsNull(LCheckBox) then
     LCheckBox.Value := BoolToInt(AIsCheck);
+end;
+
+function CheckWorksheetExistByName(AWorkBook: OleVariant; ASheetName: string): Boolean;
+var
+  i: integer;
+begin
+  Result := False;
+
+  for i := 1 to AWorkBook.WorkSheets.Count do
+  begin
+    if AWorkBook.WorkSheets[i].Name = ASheetName then
+    begin
+      Result := True;
+      Break;
+    end;
+  end;
 end;
 
 end.

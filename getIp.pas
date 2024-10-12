@@ -7,7 +7,7 @@ uses Windows, Classes, SysUtils, WinSock, IpHlpApi, IpTypes, IdTCPClient,
 
 function GetLocalIP(AIndex: integer = -1; AStrings: TStrings=nil) : string;
 function GetLocalIPFromDesignated(ADesignatedIP: string) : string;
-function GetLocalIPList : TStrings;
+function GetLocalIPList : TStringList;
 function GetLocalIPListUsingIndy : TStrings;
 procedure RetrieveLocalAdapterInformation(strings: TStrings);
 function CheckTCP_PortOpen(ipAddressStr: Ansistring; dwPort: Word): Boolean;
@@ -99,7 +99,7 @@ end;
 
 //IP List를 반환함
 //
-function GetLocalIPList : TStrings;
+function GetLocalIPList : TStringList;
 begin
   Result := TStringList.Create;
   GetLocalIP(-1, Result);

@@ -40,6 +40,8 @@ procedure TrimLeftRightChar(var S: String; Seperator: Char);
 function replaceString(str,s1,s2:string;casesensitive:boolean=false):string;
 procedure TrimRightCharPos(var S: String; Seperator: Char);
 function RemoveSpaceBetweenStrings(const AStr: string): string;
+function RemoveNumbersBetweenString(const aString: string): string;
+function RemoveNonDigitsBetweenString(const aString: string): string;
 //대문자 단위로 문자를 반환함
 function StrTokenUpcase(var S: String): string;
 function PosUpcase(const S: String): integer;
@@ -468,6 +470,40 @@ end;
 function RemoveSpaceBetweenStrings(const AStr: string): string;
 begin
   Result := replaceString(AStr, ' ', '');
+end;
+
+function RemoveNumbersBetweenString(const aString: string): string;
+var
+  C: Char;
+begin
+  Result := '';
+
+  for C in aString do begin
+    if not CharInSet(C, ['0'..'9']) then
+    begin
+      Result := Result + C;
+    end;
+  end;
+end;
+
+function RemoveNonDigitsBetweenString(const aString: string): string;
+var
+  ResChr: PChar;
+  i, LActualLength: integer;
+begin
+  SetLength(Result, aString.Length);
+  ResChr := PChar(Result);
+  LActualLength := 0;
+
+  for i := 1 to aString.Length do
+    if CharInSet(aString[i],  ['0'..'9']) then
+    begin
+      Inc(LActualLength);
+      ResChr^ := aString[i];
+      Inc(ResChr);
+    end;
+
+  SetLength(Result, LActualLength);
 end;
 
 function StrTokenUpcase(var S: String): string;
