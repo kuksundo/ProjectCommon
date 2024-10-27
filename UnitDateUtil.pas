@@ -31,6 +31,8 @@ function DateTimeMinusInteger(d1:TDateTime;i:integer;mType:integer;Sign:Char):TD
 function GetBeginTimeOfTheDay(ADate:TDateTime): TDateTime;
 //ADate의 시간을 23:59:59 로 설정하여 반환함
 function GetEndTimeOfTheDay(ADate:TDateTime): TDateTime;
+//ADate의 시간을 12:00:00 로 설정하여 반환함
+function GetNoonTimeOfTheDay(ADate:TDateTime): TDateTime;
 //초를 시분초로 분할
 function GetSecTohhnnss(ASec: double): string;
 //두 날짜의 차이를 00년00월00일 형식으로 반환(입사일과 퇴사일을 주면 근무일수를 년월일 형식으로 표시함)
@@ -199,6 +201,20 @@ begin
   min := 59;
   sec := 59;
   msec := 999;
+
+  Result := EncodeDateTime(year,mon,dat,hour,min,sec,msec);
+end;
+
+function GetNoonTimeOfTheDay(ADate:TDateTime): TDateTime;
+var hour,min,sec,msec:word;
+    year,mon,dat: word;
+begin
+  Decodedate(ADate,year,mon,dat);
+
+  hour := 12;
+  min := 00;
+  sec := 00;
+  msec := 000;
 
   Result := EncodeDateTime(year,mon,dat,hour,min,sec,msec);
 end;

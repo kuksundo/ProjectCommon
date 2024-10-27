@@ -37,6 +37,9 @@ function CheckExcelColumnHeaderFromList(AWorksheet: OleVariant; AList: TStringLi
 function GetFileNameFromStream(const AStream: TStream): string;
 procedure SetValueCheckBoxByNameOnWorkSheet(AWorksheet: OleVariant; ACBName: string; AIsCheck: Boolean);
 function CheckWorksheetExistByName(AWorkBook: OleVariant; ASheetName: string): Boolean;
+function AddSheet2WorkBookByName(AWorkBook: OleVariant; ASheetName: string; AIsCheckExist: Boolean=True): OleVariant;
+function CopySheet2WorkBookByName(AWorkBook: OleVariant; ASrcSheetName, ADestSheetName: string; AIsCheckExist: Boolean=True): OleVariant;
+function DeleteSheetFromWorkBookByName(AWorkBook: OleVariant; ASheetName: string): Boolean;
 
 implementation
 
@@ -919,6 +922,50 @@ begin
     if AWorkBook.WorkSheets[i].Name = ASheetName then
     begin
       Result := True;
+      Break;
+    end;
+  end;
+end;
+
+function AddSheet2WorkBookByName(AWorkBook: OleVariant; ASheetName: string;
+  AIsCheckExist: Boolean): OleVariant;
+begin
+  Result := null;
+
+  if AIsCheckExist then
+  begin
+    AIsCheckExist := CheckWorksheetExistByName(AWorkBook, ASheetName);
+
+    //기존에 동일한 이름의 Sheet가 존재하면 skip
+    if AIsCheckExist then
+      exit;
+  end;
+
+  Result := AWorkBook.WorkSheets.Add(EmptyParam, EmptyParam, 1, xlWorkSheet);
+end;
+
+function CopySheet2WorkBookByName(AWorkBook: OleVariant; ASrcSheetName, ADestSheetName: string; AIsCheckExist: Boolean=True): OleVariant;
+var
+  LSrcSheet: OleVariant;
+begin
+  LSrcSheet := AWorkBook.WorkSheets[ASrcSheetName];
+  Result := AWorkBook.Worksheets.Add(EmptyParam, LSrcSheet);
+  LSrcSheet.Cells.Copy(Result.Cells);
+  Result.Name := ADestSheetName;
+end;
+
+function DeleteSheetFromWorkBookByName(AWorkBook: OleVariant; ASheetName: string): Boolean;
+var
+  i: integer;
+  LSheet: OleVariant;
+begin
+  for i := 1 to AWorkBook.Sheets.Count do
+  begin
+    LSheet := AWorkBook.Sheets[i];
+
+    if LSheet.Name = ASheetName then
+    begin
+      LSheet.Delete;
       Break;
     end;
   end;
