@@ -3,7 +3,7 @@ UNIT UnitExcelUtil;
 interface
 
 uses SysUtils, StdCtrls,Classes, Graphics, Grids, ComObj, StrUtils,
-    Variants, Dialogs, Forms, Excel2010, NxColumnClasses, NxColumns, NxGrid;
+    Variants, Dialogs, Forms, Excel2010, Office2010, NxColumnClasses, NxColumns, NxGrid;
 
 procedure GridToExcel (GenericStringGrid :TStringGrid ; XLApp :TExcelApplication);
 function GetIncXLColumn(AColChar: string): string;
@@ -40,6 +40,14 @@ function CheckWorksheetExistByName(AWorkBook: OleVariant; ASheetName: string): B
 function AddSheet2WorkBookByName(AWorkBook: OleVariant; ASheetName: string; AIsCheckExist: Boolean=True): OleVariant;
 function CopySheet2WorkBookByName(AWorkBook: OleVariant; ASrcSheetName, ADestSheetName: string; AIsCheckExist: Boolean=True): OleVariant;
 function DeleteSheetFromWorkBookByName(AWorkBook: OleVariant; ASheetName: string): Boolean;
+
+procedure SetValueCheckBoxByTextOnWorkSheet(AWorksheet: OleVariant; AText: string; AIsCheck: Boolean);
+
+function GetChcekBoxNameByTextOnWorkSheet(AWorksheet: OleVariant; AText: string): string;
+function GetCheckBoxByTextOnWorkSheet(AWorksheet: OleVariant; AText: string): OleVariant;
+
+function XlsRangeCopyNInsert2WS(AWorksheet: OleVariant; ASrcRangeStr, ADestRangeStr: string): OleVariant;
+function XlsRowCopyNInsert2WS(AWorksheet: OleVariant; ASrcRow, ADestRow: integer): OleVariant;
 
 implementation
 
@@ -911,6 +919,19 @@ begin
     LCheckBox.Value := BoolToInt(AIsCheck);
 end;
 
+procedure SetValueCheckBoxByTextOnWorkSheet(AWorksheet: OleVariant; AText: string; AIsCheck: Boolean);
+var
+  LCheckBox, LOle: OLEVariant;
+  i: integer;
+begin
+  LOle := GetCheckBoxByTextOnWorkSheet(AWorksheet, AText);
+
+  LCheckBox := LOle.OLEFormat.Object;
+
+  if not VarIsNull(LCheckBox) then
+    LCheckBox.Value := BoolToInt(AIsCheck);
+end;
+
 function CheckWorksheetExistByName(AWorkBook: OleVariant; ASheetName: string): Boolean;
 var
   i: integer;
@@ -969,6 +990,72 @@ begin
       Break;
     end;
   end;
+end;
+
+function GetChcekBoxNameByTextOnWorkSheet(AWorksheet: OleVariant; AText: string): string;
+var
+  LShape: OLEVariant;
+  i: integer;
+begin
+  Result := '';
+
+  LShape := GetCheckBoxByTextOnWorkSheet(AWorksheet, AText);
+
+  if VarIsNull(LShape) = False  then
+    Result := LShape.Name;
+end;
+
+function GetCheckBoxByTextOnWorkSheet(AWorksheet: OleVariant; AText: string): OleVariant;
+var
+  LShape, LTextFrame, LCharacters: OLEVariant;
+  LText: string;
+  i: integer;
+begin
+  Result := null;
+
+  for i := 1 to AWorkSheet.Shapes.Count do
+  begin
+    LShape := AWorkSheet.Shapes.Item(i);
+
+    if not ((LShape.Type = msoFormControl) and (LShape.FormControlType = xlCheckBox)) then
+      Continue;
+
+//    LCharacters := LShape.OLEFormat;
+//    LCharacters.Activate;
+
+//    LText := LShape.Title;
+
+//    if LShape.TextFrame2.HasText then
+//    begin
+//      LText := LShape.TextFrame2.TextRange.Text;
+
+    LText := LShape.TextFrame.Characters.Text;
+//    LTextFrame := LShape.TextFrame;
+//    LCharacters := LTextFrame.Characters;
+//    LText := LCharacters.Text;
+
+      if LText = AText then
+      begin
+        Result := LShape;
+      end;
+//    end;
+  end;
+end;
+
+function XlsRangeCopyNInsert2WS(AWorksheet: OleVariant; ASrcRangeStr, ADestRangeStr: string): OleVariant;
+begin
+//  LMSRange := 'A'+ IntToStr(LERow) + ':I' + IntToStr(LERow);
+//  LPareDescRange := 'A'+ IntToStr(LERow+1)+ ':I' +  IntToStr(LERow+1);
+  Result := AWorksheet.range[ASrcRangeStr];
+  Result.Copy;
+  Result := AWorksheet.range[ADestRangeStr];
+  Result.Insert;
+end;
+
+function XlsRowCopyNInsert2WS(AWorksheet: OleVariant; ASrcRow, ADestRow: integer): OleVariant;
+begin
+  AWorkSheet.Rows[ASrcRow].Copy;
+  AWorkSheet.Rows[ADestRow].Insert();//(Shift:=xlDown)
 end;
 
 end.
