@@ -19,9 +19,11 @@ function StrIsNumeric(s: string): Boolean;
 function strToken(var S: String; Seperator: Char): String;
 function strTokenRev(var S: String; Seperator: Char): String;
 function ExtractText(const Str: string; const Delim1, Delim2: string): string;
+function ExtractTextBetweenDelim(const Str: string; const Delim1, Delim2: string): string;
 function strTokenCount(S: String; Seperator: Char): Integer;
 function GetstrTokenNth(S: string; seperator: Char; Nth: integer): string;
 function NextPos2(SearchStr, Str : String; Position : integer) : integer;
+function NthPos(const SubStr, Str: string; Nth: integer): integer;
 function PosRev(SubStr,s : string; IgnoreCase : boolean = false) : integer;
 function ExtractRelativePathBaseApplication(AApplicationPath, AFileNameWithPath: string): string;
 function InsertSymbols(s: string; c: Char; Position: Integer = 1): string;
@@ -118,11 +120,22 @@ var
 begin
   result := '';
   pos1 := Pos(Delim1, Str);
-  if pos1 > 0 then begin
+
+  if pos1 > 0 then
+  begin
+    pos1 := pos1 + Length(Delim1) - 1;
     pos2 := PosEx(Delim2, Str, pos1+1);
+
     if pos2 > 0 then
+    begin
       result := Copy(Str, pos1 + 1, pos2 - pos1 - 1);
+    end;
   end;
+end;
+
+function ExtractTextBetweenDelim(const Str: string; const Delim1, Delim2: string): string;
+begin
+  Result := ExtractText(Str, Delim1, Delim2);
 end;
 
 function strTokenCount(S: String; Seperator: Char): Integer;
@@ -154,6 +167,31 @@ begin
   If Result = 0 then exit;
   If (Length(Str) > 0) and (Length(SearchStr) > 0) then
     Result := Result + Position - 1;
+end;
+
+function NthPos(const SubStr, Str: string; Nth: integer): integer;
+var
+  Count, StartPos: integer;
+begin
+  Result := 0; //Default to 0 if not found
+  Count := 0;//Occurrence counter
+
+  StartPos := 1; //Start search from the beginning
+
+  while Count < Nth do
+  begin
+    Result := PosEx(SubStr, Str, StartPos);//Find the next occurrence
+
+    if Result = 0 then
+      exit;//exit if no more occurrences
+
+    inc(Count); //Increment the occurrence counter
+
+    if Count = Nth then
+      exit; //Return position if nth occurrence is found
+
+    StartPos := Result + 1;//Move start position past the current occurrence
+  end;//while
 end;
 
 function PosRev(SubStr,s : string; IgnoreCase : boolean = false) : integer;

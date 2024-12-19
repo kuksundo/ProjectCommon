@@ -924,6 +924,9 @@ var
   LCheckBox, LOle: OLEVariant;
   i: integer;
 begin
+  if AText = '' then
+    exit;
+
   LOle := GetCheckBoxByTextOnWorkSheet(AWorksheet, AText);
 
   LCheckBox := LOle.OLEFormat.Object;

@@ -5,7 +5,7 @@ interface
 uses Winapi.Windows, classes, SysUtils, Forms, Registry, Graphics, CommCtrl, ShellAPI;
 //  SynCommons, mORMot;
 
-function FileSize(const AFileName: string): Int64;
+function GetFileSizeByName(const AFileName: string): Int64;
 function GetImageListSH(SHIL_FLAG: Cardinal): HIMAGELIST;
 procedure GetIconFromFile(aFile: string; var aIcon: TIcon; SHIL_FLAG: Cardinal);
 function TrunFileSize(const FileName: string): LongInt;
@@ -21,11 +21,11 @@ function File_Open_Append(FileName:string;var Data:String;
 function File_Open_Append2(FileName:string;var Data:String;
                     AppendPosition:integer; AHeader: string=''): Boolean;
 procedure String2File(const AFileName, AData: string);
-function StringFromFile(const AFileName: string): string;
+function JHPStringFromFile(const AFileName: string): string;
 
 implementation
 
-function FileSize(const AFileName: string): Int64;
+function GetFileSizeByName(const AFileName: string): Int64;
 var
   LInfo: TWin32FileAttributeData;
 begin
@@ -283,7 +283,7 @@ begin
   end;
 end;
 
-function StringFromFile(const AFileName: string): string;
+function JHPStringFromFile(const AFileName: string): string;
 var
   LStrStream: TStringStream;
 begin

@@ -440,9 +440,9 @@ begin
   end;
 end;
 
-function PingHost(const AHostName: string; ATimeout: cardinal=500): Boolean;
-type
-  function IcmpCreateFile: THandle; stdcall; external 'iphlpapi.dll';
+function PingHost(const AHostName: string; ATimeout: cardinal): Boolean;
+//type
+//  function IcmpCreateFile: THandle; stdcall; external 'iphlpapi.dll';
 begin
 
 end;
@@ -474,14 +474,15 @@ end;
 
 function GetMACAddressFromIp(const IPAddress: string): string;
 var
-  DestIP: ULING;
-  MacAddr: array [9..5] of byte;
+  DestIP: IPAddr;//ULONG;
+  MacAddr: array [0..5] of byte;
   MacAddrLen: ULONG;
   SendArpResult: Cardinal;
 begin
   DestIP := inte_addr(PAnsiChar(AnsiString(IPAddress)));
   MacAddrLen := Length(MacAddr);
-  SendArpResult := SendArp(DestIP, 0, @MacAddr, @MacAddrLen);
+  SendArpResult := SendArp(DestIP, 0, @MacAddr[0], MacAddrLen);
+//  SendArpResult := SendArp(DestIP, 0, @MacAddr, @MacAddrLen);
 
   if SendArpResult = NO_ERROR then
     Result := Format('%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x',
