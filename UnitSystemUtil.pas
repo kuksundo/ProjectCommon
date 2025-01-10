@@ -17,8 +17,10 @@ function GetTheParentProcessFileName(): String;
 procedure EnumComPorts(const Ports: TStringList);
 function RunAsAdmin(AWindow: HWND; FileName: string; Parameters: string): Boolean;
 function NTSetPrivilege(APrivilege: string; AEnabled: Boolean): Boolean;
-function IsWindowsAutoLoginEnabled: Boolean;
+function IsWindowsAdminAutoLoginEnabled: Boolean;
+procedure SetWindowsAdminAutoLogin(const AEnable: Boolean);
 function IsWindowsPasswordLessEnabled: Boolean;
+procedure SetWindowsPasswordLessEnable(const AEnable: Boolean);
 
 implementation
 
@@ -192,7 +194,7 @@ begin
       raise Exception.Create(SysErrorMessage(errval));
 end;
 
-function IsWindowsAutoLoginEnabled: Boolean;
+function IsWindowsAdminAutoLoginEnabled: Boolean;
 var
   Reg: TRegistry;
   AutoAdminLogon: string;
@@ -210,6 +212,30 @@ begin
         AutoAdminLogon := Reg.ReadString('AutoAdminLogon');
         Result := AutoAdminLogon = '1';
       end;
+      Reg.CloseKey;
+    end;
+  finally
+    Reg.Free;
+  end;
+end;
+
+procedure SetWindowsAdminAutoLogin(const AEnable: Boolean);
+var
+  Reg: TRegistry;
+  AutoAdminLogon, LEnable: string;
+begin
+  Reg := TRegistry.Create(KEY_WRITE);
+  try
+    Reg.RootKey := HKEY_LOCAL_MACHINE;
+    // Open the Winlogon key in the registry
+    if Reg.OpenKey('SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon', True) then
+    begin
+      if AEnable then
+        LEnable := '1'
+      else
+        LEnable := '0';
+
+      Reg.WriteString('AutoAdminLogon', LEnable);
       Reg.CloseKey;
     end;
   finally
@@ -235,6 +261,31 @@ begin
         AutoAdminLogon := Reg.ReadString('DevicePasswordLessBuildVersion');
         Result := AutoAdminLogon = '0';
       end;
+      Reg.CloseKey;
+    end;
+  finally
+    Reg.Free;
+  end;
+end;
+
+procedure SetWindowsPasswordLessEnable(const AEnable: Boolean);
+var
+  Reg: TRegistry;
+  AutoAdminLogon, LEnable: string;
+begin
+  Reg := TRegistry.Create(KEY_WRITE);
+  try
+    Reg.RootKey := HKEY_LOCAL_MACHINE;
+
+    // Open the Winlogon key in the registry
+    if Reg.OpenKey('SOFTWARE\Microsoft\Windows NT\CurrentVersion\PasswordLess\Device', True) then
+    begin
+      if AEnable then
+        LEnable := '1'
+      else
+        LEnable := '0';
+
+      Reg.WriteString('DevicePasswordLessBuildVersion', LEnable);
       Reg.CloseKey;
     end;
   finally
