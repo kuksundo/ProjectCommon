@@ -37,7 +37,9 @@ function GetNoonTimeOfTheDay(ADate:TDateTime): TDateTime;
 function GetSecTohhnnss(ASec: double): string;
 //두 날짜의 차이를 00년00월00일 형식으로 반환(입사일과 퇴사일을 주면 근무일수를 년월일 형식으로 표시함)
 procedure GetyymmddBetweenDate(AFrom, ATo: TDate; var Ayy, Amm, Add: word);
+{$IFDEF WIN32}
 function DateTimeToMilliseconds(ADT: TDateTime): int64;
+{$ENDIF}
 //시작일자 + 만료 개월수를 입력
 //만료일자를 반환함
 function GetExpireDateFromStartDateByMonth(AStartDate: TDate; ANumOfMonth: integer): TDate;
@@ -293,6 +295,7 @@ begin
   end;
 end;
 
+{$IFDEF WIN32}
 function DateTimeToMilliseconds(ADT: TDateTime): int64;
 asm // faster version by AB
        fld   ADT
@@ -310,6 +313,7 @@ asm // faster version by AB
   @@1: div   ecx
        mov   eax,edx // we only need ttimestamp.time = Milli Seconds count
 end;
+{$ENDIF}
 
 function GetExpireDateFromStartDateByMonth(AStartDate: TDate; ANumOfMonth: integer): TDate;
 begin

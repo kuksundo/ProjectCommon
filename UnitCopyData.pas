@@ -5,14 +5,14 @@ interface
 uses Windows, Messages, SysUtils, System.Classes;
 
 Const
-  WParam_SENDWINHANDLE = 100;
-  WParam_RECVHANDLEOK =  101;
-  WParam_DISPLAYMSG = 102;
-  WParam_FORMCLOSE = 103;
-  WParam_REQMULTIRECORD = 104;
-  WParam_CHANGECOPYMODE = 105;
-  WM_MULTICOPY_BEGIN = 106;
-  WM_MULTICOPY_END = 107;
+  WParam_SENDWINHANDLE = 200;
+  WParam_RECVHANDLEOK =  201;
+  WParam_DISPLAYMSG = 202;
+  WParam_FORMCLOSE = 203;
+  WParam_REQMULTIRECORD = 204;
+  WParam_CHANGECOPYMODE = 205;
+  WM_MULTICOPY_BEGIN = 206;
+  WM_MULTICOPY_END = 207;
 
 type
   PCopyDataStruct = ^TCopyDataStruct;
@@ -46,6 +46,7 @@ type
     ParamDragMode: integer;
   end;
 
+  procedure UnitCopyDataInit(_FormName: string; _msgHandle: THandle);
   function SendCopyData(FromFormName, ToFormName, Msg: string; MsgType: integer):integer;
   procedure SendCopyData2(ToHandle: integer; Msg: string; MsgType: integer; WParam: integer=0);
   procedure SendCopyData3(ToHandle: integer; ARec : TRecToPass; WParam: integer);
@@ -56,8 +57,8 @@ type
     AWaram: integer; AShift: TShiftState; ADragMode: integer);
 
 var
-  FormName: string;   //메세지를 수신할 폼 이름
-  msgHandle: THandle; //메세지를 보낼 폼 핸들
+  FormName4CopyData: string;   //메세지를 수신할 폼 이름
+  msgHandle4CopyData: THandle; //메세지를 보낼 폼 핸들
 
 implementation
 
@@ -65,10 +66,10 @@ implementation
 //본 Unit을 사용하는 Unit애서 한번은 꼭 시행해야 함
 //FormName: 메세지를 받을 Form Name
 //msgHandle: 메세지를 보내는 놈의 Form Handle(통상 0로 함)
-procedure UnitInit(_FormName: string; _msgHandle: THandle);
+procedure UnitCopyDataInit(_FormName: string; _msgHandle: THandle);
 begin
-  FormName := _FormName;
-  msgHandle := _msgHandle;
+  FormName4CopyData := _FormName;
+  msgHandle4CopyData := _msgHandle;
 end;
 
 //FromFormName: 메세지를 보내는 폼의 이름, 널값 가능
