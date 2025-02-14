@@ -1,5 +1,5 @@
 unit UnitCopyData;
-
+{WM_COPYDATA가 구현된 Unit에서 UnitCopyData를 uses문에 추가 해야 함}
 interface
 
 uses Windows, Messages, SysUtils, System.Classes;
@@ -44,6 +44,11 @@ type
     MyHandle: THandle;
     FKbdShift: TShiftState;
     ParamDragMode: integer;
+  end;
+
+  TGPCopyData = class
+    class var FFormHandle: THandle;
+    class procedure Log2CopyData(const AMsg: string; const AMsgKind: integer; AFormHandle: THandle);
   end;
 
   procedure UnitCopyDataInit(_FormName: string; _msgHandle: THandle);
@@ -200,6 +205,17 @@ begin
   end;//with
 
   SendMessage(AToHandle, WM_COPYDATA, AWaram, LongInt(@cd));
+end;
+
+{ TGPCopyData }
+
+class procedure TGPCopyData.Log2CopyData(const AMsg: string;
+  const AMsgKind: integer; AFormHandle: THandle);
+begin
+  if AFormHandle = -1 then
+    AFormHandle := FFormHandle;
+
+  SendCopyData4(AFormHandle, AMsg, AMsgKind);
 end;
 
 end.

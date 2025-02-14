@@ -4,7 +4,7 @@ interface
 
 uses System.SysUtils, Classes,
   IdCTypes, IdHTTP, IdSSL, IdSSLOpenSSL, IdSSLOpenSSLHeaders, IdURI, IdGlobal,
-  IdIOHandler;
+  IdIOHandler, IdTCPClient;
 
 function HttpStart_Id(ARoot, AIpAddr, APort: string): boolean;
 procedure HttpStop_Id;
@@ -16,6 +16,7 @@ function GetUrlParams_Id(AUrl: string): TStringList;
 function MakeUrlFromParam_Id(AParams: TStringList): string;
 function IdBytesToString(const ABytes: TIdBytes): string;
 procedure CopyInputBuffer(Comment: string; Source, Dest: TIdIOHandler);
+function IsPortOpen_Indy(const IP: string; Port: Integer; Timeout: Integer): Boolean;
 
 var
   g_HTTPClient_Id: TIdHTTP;
@@ -250,6 +251,28 @@ begin
 //    Log(Comment + ' ' + IntToStr(Stream.Size) + ' bytes');
   finally
     FreeAndNil(Stream);
+  end;
+end;
+
+function IsPortOpen_Indy(const IP: string; Port: Integer; Timeout: Integer): Boolean;
+var
+  TCPClient: TIdTCPClient;
+begin
+  Result := False;
+  TCPClient := TIdTCPClient.Create(nil);
+  try
+    TCPClient.Host := IP;
+    TCPClient.Port := Port;
+    TCPClient.ConnectTimeout := Timeout;
+    try
+      TCPClient.Connect;
+      Result := TCPClient.Connected;
+    except
+      on E: Exception do
+        Result := False;
+    end;
+  finally
+    TCPClient.Free;
   end;
 end;
 
