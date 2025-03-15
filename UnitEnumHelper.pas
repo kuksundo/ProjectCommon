@@ -3,7 +3,7 @@ unit UnitEnumHelper;
 interface
 
 uses System.SysUtils, System.TypInfo, System.Rtti, System.Classes, Vcl.StdCtrls,
-  UnitSimpleGenericEnum;
+  UnitSimpleGenericEnum, ArrayHelper;
 
 Type
 //  IEnumerator<T> = interface
@@ -60,8 +60,9 @@ Type
     function ToOrdinal(AType: T): integer; overload;
     function ToOrdinal(AType: string): integer; overload;
     Function GetTypeLabels(ASkipNull: Boolean = False): TStringList;
+    Function GetTypeLabels2AryRec(ASkipNull: Boolean = True): TArrayRecord<string>;
     procedure SetType2Combo(ACombo: TComboBox);
-    procedure SetType2List(AList: TStrings);
+    procedure SetType2List(AList: TStrings; ASkipNull: Boolean = True);
     function IndexInRange(AIndex: integer): Boolean;
     function IsExistStrInArray(AStr: string): Boolean;
     function ToTypeFromSubString(AType: string): T;
@@ -101,7 +102,27 @@ begin
 
   for i := 0 to LCount do
   begin
-    if (ASkipNull) and (i = 0) then
+    if (ASkipNull) and (R_[i].Description = '') then
+      continue;
+
+    if (i = LCount) and (R_[i].Description = '') then
+      continue;
+
+    Result.Add(R_[i].Description);
+  end;
+end;
+
+function TLabelledEnum<T>.GetTypeLabels2AryRec(
+  ASkipNull: Boolean): TArrayRecord<string>;
+var
+  i, LCount: integer;
+  LEnumGeneric: TEnumGeneric<T>;
+begin
+  LCount := LEnumGeneric.Count - 1;
+
+  for i := 0 to LCount do
+  begin
+    if (ASkipNull) and (R_[i].Description = '') then
       continue;
 
     if (i = LCount) and (R_[i].Description = '') then
@@ -170,11 +191,11 @@ begin
   end;
 end;
 
-procedure TLabelledEnum<T>.SetType2List(AList: TStrings);
+procedure TLabelledEnum<T>.SetType2List(AList: TStrings; ASkipNull: Boolean);
 var
   LStrList: TStrings;
 begin
-  LStrList := GetTypeLabels;
+  LStrList := GetTypeLabels(ASkipNull);
   try
     AList.Clear;
     AList.AddStrings(LStrList);

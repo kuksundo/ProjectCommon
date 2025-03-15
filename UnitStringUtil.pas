@@ -2,7 +2,7 @@ unit UnitStringUtil;
 
 interface
 
-uses Windows, sysutils, classes, Vcl.Forms, shellapi, Vcl.Graphics, math, MMSystem,
+uses Windows, sysutils, classes, Vcl.Forms, shellapi, Vcl.Graphics, math, MMSystem, system.Character,
     JclStringConversions, TlHelp32, StrUtils, Comobj;
 
 const
@@ -16,12 +16,14 @@ type
   TByteStringFormat = (bsfDefault, bsfBytes, bsfKB, bsfMB, bsfGB, bsfTB);
 
 function StrIsNumeric(s: string): Boolean;
+function IsLetterOrDigit(C: char): Boolean;
 function strToken(var S: String; Seperator: Char): String;
 function strTokenRev(var S: String; Seperator: Char): String;
 function ExtractText(const Str: string; const Delim1, Delim2: string): string;
 function ExtractTextBetweenDelim(const Str: string; const Delim1, Delim2: string): string;
 function strTokenCount(S: String; Seperator: Char): Integer;
 function GetstrTokenNth(S: string; seperator: Char; Nth: integer): string;
+function GetWordCountInText(const AText, AWord: string): integer;
 function NextPos2(SearchStr, Str : String; Position : integer) : integer;
 function NthPos(const SubStr, Str: string; Nth: integer): integer;
 function PosRev(SubStr,s : string; IgnoreCase : boolean = false) : integer;
@@ -80,6 +82,11 @@ var
   iValue: Int64;
 begin
   Result := TryStrToInt64(s, iValue);
+end;
+
+function IsLetterOrDigit(C: char): Boolean;
+begin
+  Result := TCharacter.IsLetterOrDigit(C);
 end;
 
 function strToken(var S: String; Seperator: Char): String;
@@ -156,6 +163,24 @@ begin
   begin
     Result := StrToken(S,Seperator);
   end;
+end;
+
+function GetWordCountInText(const AText, AWord: string): integer;
+var
+  LStartPos, LCurPos: integer;
+begin
+  Result := 0;
+  LStartPos := 1;
+
+  repeat
+    LCurPos := PosEx(AWord, AText, LStartPos);
+
+    if LCurPos > 0 then
+    begin
+      Inc(Result);
+      LStartPos := LCurPos + 1;//Move start position past the current occurrence
+    end;
+  until LCurPos = 0;
 end;
 
 //Position: 이 위치 이후부터 맨 처음에 나오는 SearchStr의 위치를 반환함
