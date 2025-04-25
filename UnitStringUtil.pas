@@ -146,10 +146,14 @@ begin
 end;
 
 function strTokenCount(S: String; Seperator: Char): Integer;
+var
+  LStr: string;
 begin
   Result:=0;
-  while S<>'' do begin
-    StrToken(S,Seperator);
+  LStr := S;
+
+  while LStr<>'' do begin
+    StrToken(LStr, Seperator);
     Inc(Result);
   end;
 end;

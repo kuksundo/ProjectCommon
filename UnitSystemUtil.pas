@@ -4,100 +4,16 @@ interface
 
 uses Classes, Psapi, Windows, tlhelp32, SysUtils, Registry, ShellAPI;
 
-{Ex:
-  if (AnsiLowerCase(ExtractFileName(GetTheParentProcessFileName)) <> 'explorer.exe') and
-    (AnsiLowerCase(ExtractFileName(GetTheParentProcessFileName)) <> 'cmd.exe') then
-  begin
-    KillTask((ExtractFileName(GetTheParentProcessFileName)));
-    exitprocess(0);
-  end;
-}
-function KillTask(ExeFileName: string): Integer;
-function GetTheParentProcessFileName(): String;
 procedure EnumComPorts(const Ports: TStringList);
-function RunAsAdmin(AWindow: HWND; FileName: string; Parameters: string): Boolean;
 function NTSetPrivilege(APrivilege: string; AEnabled: Boolean): Boolean;
 function IsWindowsAdminAutoLoginEnabled: Boolean;
 procedure SetWindowsAdminAutoLogin(const AEnable: Boolean);
 function IsWindowsPasswordLessEnabled: Boolean;
 procedure SetWindowsPasswordLessEnable(const AEnable: Boolean);
+function GetComputerNameStr: string;
+function SetComputerNameStr(const ANewName: string): Boolean;
 
 implementation
-
-function GetTheParentProcessFileName(): String;
-const
-  BufferSize = 4096;
-var
-  HandleSnapShot  : THandle;
-  EntryParentProc : TProcessEntry32;
-  CurrentProcessId: DWORD;
-  HandleParentProc: THandle;
-  ParentProcessId : DWORD;
-  ParentProcessFound  : Boolean;
-  ParentProcPath      : String;
-
-begin
-  ParentProcessFound := False;
-  HandleSnapShot := CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);   //enumerate the process
-  if HandleSnapShot <> INVALID_HANDLE_VALUE then
-  begin
-    EntryParentProc.dwSize := SizeOf(EntryParentProc);
-    if Process32First(HandleSnapShot, EntryParentProc) then    //find the first process
-    begin
-      CurrentProcessId := GetCurrentProcessId(); //get the id of the current process
-      repeat
-        if EntryParentProc.th32ProcessID = CurrentProcessId then
-        begin
-          ParentProcessId := EntryParentProc.th32ParentProcessID; //get the id of the parent process
-          HandleParentProc := OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ, False, ParentProcessId);
-          if HandleParentProc <> 0 then
-          begin
-              ParentProcessFound := True;
-              SetLength(ParentProcPath, BufferSize);
-              GetModuleFileNameEx(HandleParentProc, 0, PChar(ParentProcPath),BufferSize);
-              ParentProcPath := PChar(ParentProcPath);
-              CloseHandle(HandleParentProc);
-          end;
-          break;
-        end;
-      until not Process32Next(HandleSnapShot, EntryParentProc);
-    end;
-    CloseHandle(HandleSnapShot);
-  end;
-
-  if ParentProcessFound then
-    Result := ParentProcPath
-  else
-    Result := '';
-end;
-
-function KillTask(ExeFileName: string): Integer;
-const
-  PROCESS_TERMINATE = $0001;
-var
-  ContinueLoop: BOOL;
-  FSnapshotHandle: THandle;
-  FProcessEntry32: TProcessEntry32;
-begin
-  Result := 0;
-  FSnapshotHandle := CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-  FProcessEntry32.dwSize := SizeOf(FProcessEntry32);
-  ContinueLoop := Process32First(FSnapshotHandle, FProcessEntry32);
-
-  while Integer(ContinueLoop) <> 0 do
-  begin
-    if ((UpperCase(ExtractFileName(FProcessEntry32.szExeFile)) =
-      UpperCase(ExeFileName)) or (UpperCase(FProcessEntry32.szExeFile) =
-      UpperCase(ExeFileName))) then
-      Result := Integer(TerminateProcess(
-                        OpenProcess(PROCESS_TERMINATE,
-                                    BOOL(0),
-                                    FProcessEntry32.th32ProcessID),
-                                    0));
-     ContinueLoop := Process32Next(FSnapshotHandle, FProcessEntry32);
-  end;
-  CloseHandle(FSnapshotHandle);
-end;
 
 //장치관리자의 COM1설명 문자 읽어 오기
 procedure EnumComPorts(const Ports: TStringList);
@@ -129,21 +45,6 @@ begin  { EnumComPorts }
     end { try-finally }
   end;
 end { EnumComPorts };
-
-function RunAsAdmin(AWindow: HWND; FileName: string; Parameters: string): Boolean;
-var
-  ShellExeInfo: TShellExecuteInfo;
-begin
-  ZeroMemory(@ShellExeInfo, SizeOf(ShellExeInfo));
-  ShellExeInfo.cbSize := SizeOf(TShellExecuteInfo);
-  ShellExeInfo.Wnd := AWindow;
-  ShellExeInfo.fMask := SEE_MASK_FLAG_DDEWAIT or SEE_MASK_FLAG_NO_UI;
-  ShellExeInfo.lpVerb := PChar('runas');
-  ShellExeInfo.lpFile := PChar(FileName);
-  ShellExeInfo.lpParameters := PChar(Parameters);
-  ShellExeInfo.nShow := SW_SHOWNORMAL;
-  Result := ShellExecuteEx(@ShellExeInfo);
-end;
 
 //사용법: if not NTSetPrivilege('SeBackupPrivilege', True) then exit;
 function NTSetPrivilege(APrivilege: string; AEnabled: Boolean): Boolean;
@@ -291,6 +192,27 @@ begin
   finally
     Reg.Free;
   end;
+end;
+
+function GetComputerNameStr: string;
+var
+  Buffer: array[0..MAX_COMPUTERNAME_LENGTH + 1] of char;
+  Size: DWORD;
+begin
+  Result := '';
+
+  Size := Length(Buffer);
+
+  if GetComputerName(Buffer, Size) then
+    Result := String(Buffer);
+end;
+
+function SetComputerNameStr(const ANewName: string): Boolean;
+var
+  lpszName: array[0..MAX_COMPUTERNAME_LENGTH + 1] of char;
+begin
+  StrPCopy(lpszName, ANewName);
+  Result := SetComputerName(lpszName);
 end;
 
 end.

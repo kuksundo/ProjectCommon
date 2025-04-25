@@ -4,6 +4,7 @@ interface
 
 uses Winapi.Windows, classes, SysUtils, Forms;
 
+function GetFileListFromFolder(Path, Mask: string; IncludeSubDir: boolean; Attr: integer = faAnyFile - faDirectory): TStringList;
 function GetFindFileList(filemask: string; IncludePath: boolean=True): TStringList;
 function WindowsFindFileList(filemask: string; showFiles, showFolders, fullPath: boolean): TStringList;
 function GetFileSize(szFile: PChar): Int64;
@@ -16,6 +17,44 @@ function DeleteFilesFromMatchDir(AExcludeFileDir, AExcludeFileMask, ADeleteFileD
 procedure GetFiles(var AFileList: TStringList; AFileName: string);
 
 implementation
+
+function GetFileListFromFolder(Path, Mask: string; IncludeSubDir: boolean; Attr: integer = faAnyFile - faDirectory): TStringList;
+var
+  FindResult: integer;
+  SearchRec : TSearchRec;
+begin
+  result := TStringList.Create;
+  result.Sorted := True;
+  try
+    Path := IncludeTrailingPathDelimiter(Path);
+    FindResult := FindFirst(Path + Mask, Attr, SearchRec);
+    while FindResult = 0 do
+    begin
+      { do whatever you'd like to do with the files found }
+      result.Add(Path + SearchRec.Name);
+      FindResult := FindNext(SearchRec);
+    end;
+    { free memory }
+    FindClose(SearchRec);
+
+    if not IncludeSubDir then
+      Exit;
+
+    FindResult := FindFirst(Path + '*.*', faDirectory, SearchRec);
+    while FindResult = 0 do
+    begin
+      if (SearchRec.Name <> '.') and (SearchRec.Name <> '..') then
+        GetFileListFromFolder (Path + SearchRec.Name + '\', Mask, TRUE);
+
+      FindResult := FindNext(SearchRec);
+    end;
+    { free memory }
+    FindClose(SearchRec);
+  finally
+//    result.CustomSort(StringListAnsiCompareDesc);
+//    result.Sorted := True;
+  end;
+end;
 
 //filemask: 'c:\*.txt'
 function GetFindFileList(filemask: string; IncludePath: boolean): TStringList;

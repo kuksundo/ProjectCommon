@@ -3,7 +3,7 @@ unit UnitProcessUtil;
 interface
 
 uses Windows, sysutils, classes, Forms, shellapi, Graphics, math, MMSystem,
-    JclStringConversions, WinSock, Winapi.Messages, TLHelp32, Registry;
+    JclStringConversions, WinSock, Winapi.Messages, TLHelp32, Registry, Winapi.PsAPI;
 
 type
   PProcWndInfo = ^TProcWndInfo;
@@ -27,6 +27,15 @@ function KillProcess(const ProcName: String): Boolean;
 function KillProcessId(const AProcId: THandle): Boolean;
 function GetConsoleOutput2(const Command : WideString;
                           Output, Errors : TStrings) : Boolean;
+{Ex:
+  if (AnsiLowerCase(ExtractFileName(GetTheParentProcessFileName)) <> 'explorer.exe') and
+    (AnsiLowerCase(ExtractFileName(GetTheParentProcessFileName)) <> 'cmd.exe') then
+  begin
+    KillTask((ExtractFileName(GetTheParentProcessFileName)));
+    exitprocess(0);
+  end;
+}
+function GetTheParentProcessFileName(): String;
 
 type
   TExecuteFileOption = (
@@ -37,7 +46,19 @@ type
   TExecuteFileOptions = set of TExecuteFileOption;
 
 function ExecuteFile(Handle: HWND; const Filename, Paramaters: String; Options: TExecuteFileOptions): Integer;
+// netsh 명령어를 실행하는 함수
 procedure RunPowerShellCommand(Command: string);
+{
+  // netsh 명령어 생성
+  Cmd := Format('interface ip set address name="%s" static %s %s %s 1',
+                [InterfaceName, IPAddress, SubnetMask, Gateway]);
+  // 마지막 '1'은 메트릭 값입니다. 게이트웨이가 없으면 Gateway 파라미터와 메트릭을 생략할 수 있습니다.
+  // 예: Cmd := Format('interface ip set address name="%s" static %s %s', [InterfaceName, IPAddress, SubnetMask]);
+
+  // DHCP 설정 명령어
+  Cmd := Format('interface ip set address name="%s" dhcp', [InterfaceName]);
+}
+function ExecuteNetshCommand(const ACommand: string): string;
 
 implementation
 
@@ -565,4 +586,88 @@ begin
   ShellExecute(0, 'open', 'powershell.exe', PChar('-Command ' + Command), nil, SW_HIDE);
 end;
 
+function GetTheParentProcessFileName(): String;
+const
+  BufferSize = 4096;
+var
+  HandleSnapShot  : THandle;
+  EntryParentProc : TProcessEntry32;
+  CurrentProcessId: DWORD;
+  HandleParentProc: THandle;
+  ParentProcessId : DWORD;
+  ParentProcessFound  : Boolean;
+  ParentProcPath      : String;
+
+begin
+  ParentProcessFound := False;
+  HandleSnapShot := CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);   //enumerate the process
+  if HandleSnapShot <> INVALID_HANDLE_VALUE then
+  begin
+    EntryParentProc.dwSize := SizeOf(EntryParentProc);
+    if Process32First(HandleSnapShot, EntryParentProc) then    //find the first process
+    begin
+      CurrentProcessId := GetCurrentProcessId(); //get the id of the current process
+      repeat
+        if EntryParentProc.th32ProcessID = CurrentProcessId then
+        begin
+          ParentProcessId := EntryParentProc.th32ParentProcessID; //get the id of the parent process
+          HandleParentProc := OpenProcess(PROCESS_QUERY_INFORMATION or PROCESS_VM_READ, False, ParentProcessId);
+          if HandleParentProc <> 0 then
+          begin
+              ParentProcessFound := True;
+              SetLength(ParentProcPath, BufferSize);
+              GetModuleFileNameEx(HandleParentProc, 0, PChar(ParentProcPath),BufferSize);
+              ParentProcPath := PChar(ParentProcPath);
+              CloseHandle(HandleParentProc);
+          end;
+          break;
+        end;
+      until not Process32Next(HandleSnapShot, EntryParentProc);
+    end;
+    CloseHandle(HandleSnapShot);
+  end;
+
+  if ParentProcessFound then
+    Result := ParentProcPath
+  else
+    Result := '';
+end;
+
+function ExecuteNetshCommand(const ACommand: string): string;
+var
+  SEInfo: TShellExecuteInfo;
+  ExitCode: DWORD;
+begin
+  Result := '';
+  FillChar(SEInfo, SizeOf(SEInfo), 0);
+  SEInfo.cbSize := SizeOf(TShellExecuteInfo);
+  SEInfo.fMask := SEE_MASK_NOCLOSEPROCESS or SEE_MASK_FLAG_NO_UI; // UI 없이 실행하고 프로세스 핸들 얻기
+  SEInfo.Wnd := Application.Handle;
+  SEInfo.lpVerb := 'runas'; // 관리자 권한 요청!!!
+  SEInfo.lpFile := 'netsh.exe';
+  SEInfo.lpParameters := PChar(ACommand);
+  SEInfo.nShow := SW_HIDE; // 창 숨기기
+
+  if ShellExecuteEx(@SEInfo) then
+  begin
+    // 명령이 완료될 때까지 기다림 (선택 사항, 필요에 따라 조절)
+    if SEInfo.hProcess <> 0 then
+    begin
+      WaitForSingleObject(SEInfo.hProcess, INFINITE);
+      // GetExitCodeProcess(SEInfo.hProcess, ExitCode); // 종료 코드 확인 (필요시)
+      CloseHandle(SEInfo.hProcess);
+      Result := ''; // 성공적으로 실행 요청됨 (netsh 내부의 성공 여부는 별개)
+    end
+    else
+    begin
+      // 프로세스 핸들을 얻지 못한 경우 (드문 경우)
+      Result := '프로세스 핸들을 얻지 못했습니다.';
+    end;
+  end
+  else
+  begin
+    // ShellExecuteEx 실패 (예: 사용자가 권한 상승 거부)
+    Result := 'netsh 명령 실행에 실패했습니다. 오류 코드: ' + IntToStr(GetLastError);
+  end;
+end;
 end.

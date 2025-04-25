@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  ExtCtrls, ImgList, Menus, ComCtrls, ToolWin, IPHelper, WinSock,NB30;
+  ExtCtrls, ImgList, Menus, ComCtrls, ToolWin, WinSock, NB30;//IPHelper,
 
 type
   IP_HostName = (_IP, _HOSTNAME);
@@ -25,7 +25,7 @@ procedure WakeOnLan2(const AMacAddress: string);
 procedure WakeOnLan3(AMACAddr: string);
 function PingHost(const AHostName: string; ATimeout: cardinal=500): Boolean;
 
-function GetIpAddressFromHostName(const HostName: AnsiString): AnsiString;
+function GetIpAddressFromHostName(const HostName: AnsiString=''): String;
 function GetMACAddressFromIp(const IPAddress: string): string;
 
 implementation
@@ -159,49 +159,49 @@ Var
   lphEnum     : THandle;
   Temp        : PNetResourceArr;
 Begin
-  Result := -1;
-  List.Clear;
-  GetMem(Buf, 8192);
-  GetMem(Buf2, 1000);
-  Try
-    FillChar(NetResource, SizeOf(NetResource), 0);
-    NetResource.lpRemoteName := @WorkgroupName[1];
-    NetResource.dwDisplayType := RESOURCEDISPLAYTYPE_SERVER;
-    NetResource.dwUsage := RESOURCEUSAGE_CONTAINER;
-    NetResource.dwScope := RESOURCETYPE_DISK;
-    Res := WNetOpenEnum(RESOURCE_GLOBALNET, RESOURCETYPE_DISK, RESOURCEUSAGE_CONTAINER, @NetResource,lphEnum);
-    If Res <> NO_ERROR Then
-    begin
-      Result := GetLastError;
-      if Result = ERROR_EXTENDED_ERROR then
-      begin
-        WNetGetLastError( Ind,@Buf,8192,buf2,1000);
-        if Result = NO_ERROR then
-          Result := Ind;
-      end;
-      Exit;
-    end;
-
-    While True Do
-    Begin
-      Count := $FFFFFFFF;
-      BufSize := 8192;
-      Result := WNetEnumResource(lphEnum, Count, Pointer(Buf), BufSize);
-      If Result = ERROR_NO_MORE_ITEMS Then Break;
-      If (Result <> 0) then Break;
-      Temp := PNetResourceArr(Buf);
-      For Ind := 0 to Count - 1 do
-      Begin
-        List.Add(Temp^.lpRemoteName + 2); { Add all the network usernames to List StringList }
-        Inc(Temp);
-      End;
-    End;
-    Result := WNetCloseEnum(lphEnum);
-    If Result <> NO_ERROR Then Raise Exception(Res);
-  Finally
-    FreeMem(Buf2);
-    FreeMem(Buf);
-  End;
+//  Result := -1;
+//  List.Clear;
+//  GetMem(Buf, 8192);
+//  GetMem(Buf2, 1000);
+//  Try
+//    FillChar(NetResource, SizeOf(NetResource), 0);
+//    NetResource.lpRemoteName := @WorkgroupName[1];
+//    NetResource.dwDisplayType := RESOURCEDISPLAYTYPE_SERVER;
+//    NetResource.dwUsage := RESOURCEUSAGE_CONTAINER;
+//    NetResource.dwScope := RESOURCETYPE_DISK;
+//    Res := WNetOpenEnum(RESOURCE_GLOBALNET, RESOURCETYPE_DISK, RESOURCEUSAGE_CONTAINER, @NetResource,lphEnum);
+//    If Res <> NO_ERROR Then
+//    begin
+//      Result := GetLastError;
+//      if Result = ERROR_EXTENDED_ERROR then
+//      begin
+//        WNetGetLastError( Ind,@Buf,8192,buf2,1000);
+//        if Result = NO_ERROR then
+//          Result := Ind;
+//      end;
+//      Exit;
+//    end;
+//
+//    While True Do
+//    Begin
+//      Count := $FFFFFFFF;
+//      BufSize := 8192;
+//      Result := WNetEnumResource(lphEnum, Count, Pointer(Buf), BufSize);
+//      If Result = ERROR_NO_MORE_ITEMS Then Break;
+//      If (Result <> 0) then Break;
+//      Temp := PNetResourceArr(Buf);
+//      For Ind := 0 to Count - 1 do
+//      Begin
+//        List.Add(Temp^.lpRemoteName + 2); { Add all the network usernames to List StringList }
+//        Inc(Temp);
+//      End;
+//    End;
+//    Result := WNetCloseEnum(lphEnum);
+//    If Result <> NO_ERROR Then Raise Exception(Res);
+//  Finally
+//    FreeMem(Buf2);
+//    FreeMem(Buf);
+//  End;
 End;
 
 //Domain List를 List에 저장한다
@@ -235,63 +235,63 @@ Var
   j           : SmallInt;
   NetworkTypeList : TList;
 Begin
-  Result := False;
-  NetworkTypeList := TList.Create;
-  TStringList(List).Clear;
-  GetMem(Buf, 8192);
-  Try
-    Res := WNetOpenEnum(RESOURCE_GLOBALNET, RESOURCETYPE_DISK, RESOURCEUSAGE_CONTAINER, Nil,lphEnum);
-    If Res <> 0 Then Raise Exception(Res);
-    Count := $FFFFFFFF;
-    BufSize := 8192;
-    Res := WNetEnumResource(lphEnum, Count, Pointer(Buf), BufSize);
-    If Res = ERROR_NO_MORE_ITEMS Then Exit;
-    If (Res <> 0) Then Raise Exception(Res);
-    P := PNetResourceArr(Buf);
-    For I := 0 To Count - 1 Do
-    Begin
-      New(TempRec);
-      TempRec^.dwScope := P^.dwScope;
-      TempRec^.dwType := P^.dwType ;
-      TempRec^.dwDisplayType := P^.dwDisplayType ;
-      TempRec^.dwUsage := P^.dwUsage ;
-      TempRec^.LocalName := StrPas(P^.lpLocalName);
-      TempRec^.RemoteName := StrPas(P^.lpRemoteName);
-      TempRec^.Comment := StrPas(P^.lpComment);
-      TempRec^.Provider := StrPas(P^.lpProvider);
-      NetworkTypeList.Add(TempRec);
-      Inc(P);
-    End;
-    Res := WNetCloseEnum(lphEnum);
-    If Res <> 0 Then Raise Exception(Res);
-    For J := 0 To NetworkTypeList.Count-1 Do
-    Begin
-      TempRec := NetworkTypeList.Items[J];
-      NetResource := TNetResource(TempRec^);
-      Res := WNetOpenEnum(RESOURCE_GLOBALNET, RESOURCETYPE_DISK, RESOURCEUSAGE_CONTAINER, @NetResource,lphEnum);
-      If Res <> 0 Then Raise Exception(Res);
-      While true Do
-      Begin
-        Count := $FFFFFFFF;
-        BufSize := 8192;
-        Res := WNetEnumResource(lphEnum, Count, Pointer(Buf), BufSize);
-        If Res = ERROR_NO_MORE_ITEMS Then Break;
-        If (Res <> 0) Then Raise Exception(Res);
-        P := PNetResourceArr(Buf);
-        For I := 0 To Count - 1 Do
-        Begin
-          TStringList(List).Add(P^.lpRemoteName);
-          Inc(P);
-        End;
-      End;
-    End;
-    Res := WNetCloseEnum(lphEnum);
-    If Res <> 0 Then Raise Exception(Res);
-    Result := True;
-    Finally
-      FreeMem(Buf);
-      NetworkTypeList.Destroy;
-  End;
+//  Result := False;
+//  NetworkTypeList := TList.Create;
+//  TStringList(List).Clear;
+//  GetMem(Buf, 8192);
+//  Try
+//    Res := WNetOpenEnum(RESOURCE_GLOBALNET, RESOURCETYPE_DISK, RESOURCEUSAGE_CONTAINER, Nil,lphEnum);
+//    If Res <> 0 Then Raise Exception(Res);
+//    Count := $FFFFFFFF;
+//    BufSize := 8192;
+//    Res := WNetEnumResource(lphEnum, Count, Pointer(Buf), BufSize);
+//    If Res = ERROR_NO_MORE_ITEMS Then Exit;
+//    If (Res <> 0) Then Raise Exception(Res);
+//    P := PNetResourceArr(Buf);
+//    For I := 0 To Count - 1 Do
+//    Begin
+//      New(TempRec);
+//      TempRec^.dwScope := P^.dwScope;
+//      TempRec^.dwType := P^.dwType ;
+//      TempRec^.dwDisplayType := P^.dwDisplayType ;
+//      TempRec^.dwUsage := P^.dwUsage ;
+//      TempRec^.LocalName := StrPas(P^.lpLocalName);
+//      TempRec^.RemoteName := StrPas(P^.lpRemoteName);
+//      TempRec^.Comment := StrPas(P^.lpComment);
+//      TempRec^.Provider := StrPas(P^.lpProvider);
+//      NetworkTypeList.Add(TempRec);
+//      Inc(P);
+//    End;
+//    Res := WNetCloseEnum(lphEnum);
+//    If Res <> 0 Then Raise Exception(Res);
+//    For J := 0 To NetworkTypeList.Count-1 Do
+//    Begin
+//      TempRec := NetworkTypeList.Items[J];
+//      NetResource := TNetResource(TempRec^);
+//      Res := WNetOpenEnum(RESOURCE_GLOBALNET, RESOURCETYPE_DISK, RESOURCEUSAGE_CONTAINER, @NetResource,lphEnum);
+//      If Res <> 0 Then Raise Exception(Res);
+//      While true Do
+//      Begin
+//        Count := $FFFFFFFF;
+//        BufSize := 8192;
+//        Res := WNetEnumResource(lphEnum, Count, Pointer(Buf), BufSize);
+//        If Res = ERROR_NO_MORE_ITEMS Then Break;
+//        If (Res <> 0) Then Raise Exception(Res);
+//        P := PNetResourceArr(Buf);
+//        For I := 0 To Count - 1 Do
+//        Begin
+//          TStringList(List).Add(P^.lpRemoteName);
+//          Inc(P);
+//        End;
+//      End;
+//    End;
+//    Res := WNetCloseEnum(lphEnum);
+//    If Res <> 0 Then Raise Exception(Res);
+//    Result := True;
+//    Finally
+//      FreeMem(Buf);
+//      NetworkTypeList.Destroy;
+//  End;
 End;
 
 procedure WakeOnLan1(AMACAddr: string);
@@ -447,11 +447,12 @@ begin
 
 end;
 
-function GetIpAddressFromHostName(const HostName: AnsiString): AnsiString;
+function GetIpAddressFromHostName(const HostName: AnsiString): String;
 var
   HostEnt: PHostEnt;
   Host: AnsiString;
   SockAddr: TSockAddrIn;
+  Addr: PAnsiChar;
 begin
   Result := '';
 
@@ -460,37 +461,37 @@ begin
   if Host = '' then
   begin
     SetLength(Host, MAX_PATH);
-    GotHostName(PAnsiChar(Host), MAX_PATH);
+    GetHostName(PAnsiChar(Host), MAX_PATH);
   end;
 
   HostEnt := GetHostByName(PAnsiCHar(Host));
 
   if HostEnt <> nil then
   begin
-    SockAddr := sin_addr.S_addr := Longint(PLingint(HostEnt^.h_addr_list^)^);
-    Result := inet_ntoa(SOckAddr.sin_addr);
+    Addr := inet_ntoa(PInAddr(HostEnt^.h_addr_list^)^);
+    Result := string(Addr);
   end;
 end;
 
 function GetMACAddressFromIp(const IPAddress: string): string;
-var
-  DestIP: IPAddr;//ULONG;
-  MacAddr: array [0..5] of byte;
-  MacAddrLen: ULONG;
-  SendArpResult: Cardinal;
+//var
+//  DestIP: IPAddr;//ULONG;
+//  MacAddr: array [0..5] of byte;
+//  MacAddrLen: ULONG;
+//  SendArpResult: Cardinal;
 begin
-  DestIP := inte_addr(PAnsiChar(AnsiString(IPAddress)));
-  MacAddrLen := Length(MacAddr);
-  SendArpResult := SendArp(DestIP, 0, @MacAddr[0], MacAddrLen);
-//  SendArpResult := SendArp(DestIP, 0, @MacAddr, @MacAddrLen);
-
-  if SendArpResult = NO_ERROR then
-    Result := Format('%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x',
-                      [MacAddr[0], MacAddr[1], MacAddr[2],
-                       MacAddr[3], MacAddr[4], MacAddr[5]]
-              )
-  else
-    Result := '';
+//  DestIP := inte_addr(PAnsiChar(AnsiString(IPAddress)));
+//  MacAddrLen := Length(MacAddr);
+//  SendArpResult := SendArp(DestIP, 0, @MacAddr[0], MacAddrLen);
+////  SendArpResult := SendArp(DestIP, 0, @MacAddr, @MacAddrLen);
+//
+//  if SendArpResult = NO_ERROR then
+//    Result := Format('%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x',
+//                      [MacAddr[0], MacAddr[1], MacAddr[2],
+//                       MacAddr[3], MacAddr[4], MacAddr[5]]
+//              )
+//  else
+//    Result := '';
 end;
 
 end.

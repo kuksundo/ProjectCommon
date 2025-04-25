@@ -48,14 +48,14 @@ type
 
   TGPCopyData = class
     class var FFormHandle: THandle;
-    class procedure Log2CopyData(const AMsg: string; const AMsgKind: integer; AFormHandle: THandle);
+    class procedure Log2CopyData(const AMsg: string; const AMsgKind: integer; AFormHandle: THandle; AValue: integer=0);
   end;
 
   procedure UnitCopyDataInit(_FormName: string; _msgHandle: THandle);
   function SendCopyData(FromFormName, ToFormName, Msg: string; MsgType: integer):integer;
   procedure SendCopyData2(ToHandle: integer; Msg: string; MsgType: integer; WParam: integer=0);
   procedure SendCopyData3(ToHandle: integer; ARec : TRecToPass; WParam: integer);
-  procedure SendCopyData4(ToHandle: integer; Msg: string; WParam: integer);
+  procedure SendCopyData4(ToHandle, iData: integer; Msg: string; WParam: integer);
   procedure SendHandleCopyData(AToHandle: integer; AMyHandle: THandle;
     AWaram: integer);
   procedure SendHandleCopyDataWithShift(AToHandle: integer; AMyHandle: THandle;
@@ -125,6 +125,8 @@ var
   cd : TCopyDataStruct;
   rec : TRecToPass;
 begin
+  Rec := Default(TRecToPass);
+
     with rec, cd do
     begin
       if Msg <> '' then
@@ -154,13 +156,13 @@ begin
     SendMessage(ToHandle, WM_COPYDATA, WParam, LongInt(@cd));
 end;
 
-procedure SendCopyData4(ToHandle: integer; Msg: string; WParam: integer);
+procedure SendCopyData4(ToHandle, iData: integer; Msg: string; WParam: integer);
 var
   cd : TCopyDataStruct;
 begin
   with cd do
   begin
-    dwData := 3232;
+    dwData := iData;//3232
     cbData := Length(Msg)+1;
     lpData := PChar(Msg);
   end;//with
@@ -210,12 +212,13 @@ end;
 { TGPCopyData }
 
 class procedure TGPCopyData.Log2CopyData(const AMsg: string;
-  const AMsgKind: integer; AFormHandle: THandle);
+  const AMsgKind: integer; AFormHandle: THandle; AValue: integer);
 begin
   if AFormHandle = -1 then
     AFormHandle := FFormHandle;
 
-  SendCopyData4(AFormHandle, AMsg, AMsgKind);
+  SendCopyData4(AFormHandle, AValue, AMsg, AMsgKind);
+//  SendCopyData2(AFormHandle, AMsg, AValue, AMsgKind);
 end;
 
 end.
