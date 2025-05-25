@@ -4,6 +4,9 @@ interface
 
 uses  Windows, SysUtils;
 
+type
+  THanType = (htHangul, htHanja, htOther);
+
 function IsHanGeul(S: String): Boolean;
 function IsHanGeul2(S: String; AIndex: integer): Boolean;
 function GetHanType(const Src: string): THanType;
@@ -55,8 +58,6 @@ end;
 
 //한글인지 한자인지 구분함
 function GetHanType(const Src: string): THanType;
-type
-  THanType = (htHangul, htHanja, htOther);
 var
   Len, Hi, Lo: Integer;
 begin
@@ -91,7 +92,7 @@ var
 begin
   Result := False;
 
-  MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, Han, 2, @UniCode, 1);
+//  MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, Han, 2, @UniCode, 1);
 
   if (UniCode < UniCodeHangeulBase) or
      (UniCode > UniCodeHangeulLast) then Exit;
@@ -153,8 +154,8 @@ begin
   UniCode := UniCodeHangeulBase +
     (ChoSung * 21 + JungSung) * 28 + JongSung;
 
-  WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK,
-    @UniCode, 1, Han, 2, nil, nil);
+//  WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK,
+//    @UniCode, 1, Han, 2, nil, nil);
 
   Result := True;
 end;

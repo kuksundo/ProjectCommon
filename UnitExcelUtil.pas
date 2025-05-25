@@ -3,14 +3,26 @@ UNIT UnitExcelUtil;
 interface
 
 uses SysUtils, StdCtrls,Classes, Graphics, Grids, ComObj, StrUtils,
-    Variants, Dialogs, Forms, Excel2010, Office2010, NxColumnClasses, NxColumns, NxGrid;
+    Variants, Dialogs, Forms, Excel2010, Office2010, NxColumnClasses, NxColumns,
+    NxGrid, System.Generics.Collections,
+    mormot.core.variants, mormot.core.unicode;
 
 procedure GridToExcel (GenericStringGrid :TStringGrid ; XLApp :TExcelApplication);
 function GetIncXLColumn(AColChar: string): string;
 function GetDecXLColumn(AColChar: string): string;
 function GetExcelColumnAlphabetByInt(AIndex: integer): string;
+function GetIntFromExcelColumnAlphabet(AColChar: string): integer;
 procedure NextGridToExcel(ANextGrid :TNextGrid; ASheetName: string = '';
   ASaveFileName: string=''; ASkipHideColumn: Boolean=True);
+function GetJsonAryBySheetNameFromExcelFile(AFileName: string; ASheetName: string='';
+  AHeaderStartCol: string='A'; AHeaderStartRow: string='1';
+  ADataStartCol: string='A'; ADataStartRow: string='2'; ASkipBlank: Boolean=False): string;
+function GetJsonAryFromExcelSheet(AExcelSheet: OleVariant;
+  AHeaderStartCol: string='A'; AHeaderStartRow: string='1';
+  ADataStartCol: string='A'; ADataStartRow: string='2'; ASkipBlank: Boolean=False): string;
+//Excel Sheet Cell Data를 AList에 채움(Column Header에 채우기 위함)
+function GetColumnListFromExcelSheet(AExcelSheet: OleVariant; AList: TStringList;
+  AStartCol: string='A'; AStartRow: string='1'; ASkipBlank: Boolean=False): integer;
 //procedure Database2Excel(DbQuery: TQuery);
 //procedure ExcelToStrGrid(sFileName: String; svGrid: TStringGrid);
 //procedure DataSetToExcelFile(const Dataset: TDataset;const Filename: string);
@@ -40,6 +52,7 @@ function CheckWorksheetExistByName(AWorkBook: OleVariant; ASheetName: string): B
 function AddSheet2WorkBookByName(AWorkBook: OleVariant; ASheetName: string; AIsCheckExist: Boolean=True): OleVariant;
 function CopySheet2WorkBookByName(AWorkBook: OleVariant; ASrcSheetName, ADestSheetName: string; AIsCheckExist: Boolean=True): OleVariant;
 function DeleteSheetFromWorkBookByName(AWorkBook: OleVariant; ASheetName: string): Boolean;
+function GetWorkSheetByNameFromExcelFile(AExcelFileName, ASheetName: string): OleVariant;
 
 procedure SetValueCheckBoxByTextOnWorkSheet(AWorksheet: OleVariant; AText: string; AIsCheck: Boolean);
 
@@ -49,9 +62,13 @@ function GetCheckBoxByTextOnWorkSheet(AWorksheet: OleVariant; AText: string): Ol
 function XlsRangeCopyNInsert2WS(AWorksheet: OleVariant; ASrcRangeStr, ADestRangeStr: string): OleVariant;
 function XlsRowCopyNInsert2WS(AWorksheet: OleVariant; ASrcRow, ADestRow: integer): OleVariant;
 
+function ReadExcelRangeToVarArrayFromWorkSheet(AWorksheet: OleVariant; RangeStr: string): Variant;
+//Range가 병합된 Ragnge이면 실제 데이터가 있는 Range를 반환 함
+function GetTopRangeOfMergedRange(ARange: OleVariant): OleVariant;
+
 implementation
 
-uses UnitMiscUtil;
+uses UnitMiscUtil, UnitJsonUtil, ArrayHelper;
 
 //StringGrid의 내용을 MSExcel에 넣어주는 함수
 //TExcelApplication의 ConnectKind Property 를 ckNewInstance로 설정해야함
@@ -166,6 +183,19 @@ begin
     LModulo := (LDividend - 1) mod 26;
     Result := Char(65 + LModulo) + Result;
     LDividend := (LDividend - LModulo) div 26;
+  end;
+end;
+
+function GetIntFromExcelColumnAlphabet(AColChar: string): integer;
+var
+  i, Len, CharValue: Integer;
+begin
+  Result := 0;
+  Len := Length(AColChar);
+  for i := 1 to Len do
+  begin
+    CharValue := Ord(UpCase(AColChar[i])) - Ord('A') + 1;
+    Result := Result * 26 + CharValue;
   end;
 end;
 
@@ -309,6 +339,133 @@ begin
     XLApp.Disconnect;
     XLApp.Free;
     TabGrid := Unassigned;
+  end;
+end;
+
+function GetJsonAryBySheetNameFromExcelFile(AFileName, ASheetName: string;
+  AHeaderStartCol, AHeaderStartRow, ADataStartCol, ADataStartRow: string; ASkipBlank: Boolean): string;
+var
+  LExcel: OleVariant;
+  LWorkBook: OleVariant;
+  LRange: OleVariant;
+  LWorksheet: OleVariant;
+begin
+  Result := '';
+
+  if not FileExists(AFileName) then
+  begin
+    ShowMessage('File(' + AFileName + ')이 존재하지 않습니다');
+    exit;
+  end;
+
+  LExcel := GetActiveExcelOleObject(True);
+  LWorkBook := LExcel.Workbooks.Open(AFileName);
+//  LExcel.Visible := true;
+//  LExcel.ActiveWindow.Zoom := 100;
+  if ASheetName = '' then
+    LWorksheet := LExcel.ActiveSheet
+  else
+  begin
+    if LWorkbook.Sheets[ASheetName].Activate then
+      LWorksheet := LExcel.ActiveSheet;
+  end;
+
+  if VarIsNull(LWorksheet) then
+  begin
+    ShowMessage('Worksheet [' + ASheetName + '] 가 존재하지 않습니다');
+    exit;
+  end;
+
+  Result := GetJsonAryFromExcelSheet(LWorksheet, AHeaderStartCol, AHeaderStartRow,
+    ADataStartCol, ADataStartRow, ASkipBlank);
+
+//  LExcel.WorkBooks.Close();
+  LWorkbook.Close(False);
+  LExcel.quit;
+  LExcel:=unassigned;
+end;
+
+function GetJsonAryFromExcelSheet(AExcelSheet: OleVariant;
+  AHeaderStartCol, AHeaderStartRow, ADataStartCol, ADataStartRow: string; ASkipBlank: Boolean): string;
+var
+  LCol, LRow, LLastRow, LLastColumn, LStartCol, LStartRow: integer;
+  LColList: TStringList;
+  LJsonAry, LColChar, LCellData: string;
+  LList: IDocList;
+  LRange: OleVariant;
+  LAry: TArray<string>;
+begin
+  Result := '';
+  LList := DocList('[]');
+  LStartRow := StrToIntDef(AHeaderStartRow, 0);
+  LStartCol := GetIntFromExcelColumnAlphabet(AHeaderStartCol);
+
+  LColList := TStringList.Create;
+  try
+    LLastRow := GetLastRowNumFromExcel(AExcelSheet);
+//    LLastColumn := GetLastColNumFromExcel(AExcelSheet);
+    LLastColumn := GetColumnListFromExcelSheet(AExcelSheet, LColList, AHeaderStartCol, AHeaderStartRow, ASkipBlank);
+    LJsonAry := GetJsonAryFromStringList(LColList);
+    LList.Append(StringToUtf8(LJsonAry));
+
+    LStartRow := StrToIntDef(ADataStartRow, 0);
+
+    for LRow := LStartRow to LLastRow do //2
+    begin
+      LColChar := ADataStartCol;//'A';
+      TArray.Clear<string>(LAry);
+
+      for LCol := LStartCol to LLastColumn do
+      begin
+        LRange := AExcelSheet.Range[LColChar+IntToStr(LRow)];
+        LCellData := LRange.Value;
+
+        //첫번째 데이터가 공란이면 탈출
+        if (LCol = LStartCol) and (LCellData = '') then
+          Break;
+
+        LColChar := GetIncXLColumn(LColChar);
+
+        if ASkipBlank and (LCellData = '') then
+          Continue;
+
+        TArray.Add<string>(LAry, LCellData);
+      end;
+
+      LJsonAry := GetJsonAryFromTArray(LAry);
+      LList.Append(StringToUtf8(LJsonAry));
+    end;
+
+    Result := Utf8ToString(LList.Json);
+  finally
+    LColList.Free;
+  end;
+end;
+
+function GetColumnListFromExcelSheet(AExcelSheet: OleVariant; AList: TStringList;
+  AStartCol, AStartRow: string; ASkipBlank: Boolean): integer;
+var
+  Li, LStartCol: integer;
+  LColChar, LColName: string;
+  LRange: OleVariant;
+begin
+  Result := GetLastColNumFromExcel(AExcelSheet);
+  LColChar := AStartCol;//'A';
+  LStartCol := GetIntFromExcelColumnAlphabet(AStartCol);
+
+  for Li := LStartCol to Result do
+  begin
+    //첫번째 행(AStartRow)에 Column Name이 존재 해야 함
+    LRange := AExcelSheet.range[LColChar+AStartRow];//'1'
+    LRange := GetTopRangeOfMergedRange(LRange);
+    LColName := LRange.Value;
+
+    LColChar := GetIncXLColumn(LColChar);
+
+    if ASkipBlank and (LColName = '') then
+      Continue;
+
+    AList.Add(LColName);
   end;
 end;
 
@@ -995,6 +1152,39 @@ begin
   end;
 end;
 
+function GetWorkSheetByNameFromExcelFile(AExcelFileName, ASheetName: string): OleVariant;
+var
+  LExcel: OleVariant;
+  LWorkBook: OleVariant;
+  i: integer;
+begin
+  Result := null;
+
+  if not FileExists(AExcelFileName) then
+  begin
+    ShowMessage('File(' + AExcelFileName + ')이 존재하지 않습니다');
+    exit;
+  end;
+
+  LExcel := GetActiveExcelOleObject(True);
+  LWorkBook := LExcel.Workbooks.Open(AExcelFileName);
+  LExcel.Visible := true;
+
+  if ASheetName = '' then
+    Result := LExcel.ActiveSheet
+  else
+  begin
+    for i := 1 to LWorkBook.WorkSheets.Count do
+    begin
+      if LWorkBook.WorkSheets[i].Name = ASheetName then
+      begin
+        Result := LWorkBook.WorkSheets[i];
+        Break;
+      end;
+    end;//for
+  end;
+end;
+
 function GetChcekBoxNameByTextOnWorkSheet(AWorksheet: OleVariant; AText: string): string;
 var
   LShape: OLEVariant;
@@ -1059,6 +1249,31 @@ function XlsRowCopyNInsert2WS(AWorksheet: OleVariant; ASrcRow, ADestRow: integer
 begin
   AWorkSheet.Rows[ASrcRow].Copy;
   AWorkSheet.Rows[ADestRow].Insert();//(Shift:=xlDown)
+end;
+
+function ReadExcelRangeToVarArrayFromWorkSheet(AWorksheet: OleVariant; RangeStr: string): Variant;
+var
+  LRange: OleVariant;
+begin
+  LRange := AWorksheet.Range[RangeStr];
+  Result := LRange.Value; // 이 부분이 Variant Array를 반환함
+end;
+
+function GetTopRangeOfMergedRange(ARange: OleVariant): OleVariant;
+var
+  MergeArea: OleVariant;
+begin
+  // 병합되지 않은 경우: 현재 Range 좌표 반환
+  if VarIsEmpty(ARange.MergeCells) or not ARange.MergeCells then
+  begin
+    Result := ARange;
+  end
+  else
+  begin
+    // 병합된 경우: MergeArea의 좌상단 셀 반환
+    MergeArea := ARange.MergeArea;
+    Result := MergeArea.Cells[1, 1];
+  end;
 end;
 
 end.

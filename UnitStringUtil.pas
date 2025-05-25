@@ -44,8 +44,13 @@ procedure TrimLeftRightChar(var S: String; Seperator: Char);
 function replaceString(str,s1,s2:string;casesensitive:boolean=false):string;
 procedure TrimRightCharPos(var S: String; Seperator: Char);
 function RemoveSpaceBetweenStrings(const AStr: string): string;
+function RemoveSpace2String(S: String): string;
 function RemoveNumbersBetweenString(const aString: string): string;
 function RemoveNonDigitsBetweenString(const aString: string): string;
+procedure SplitLettersAndNumbers(AStr: string; out ALetters: string; out ANumbers: string);
+function GetLast3OfLetters(const AStr: string): string;
+function GetSubStringAfter(const ASubStr, AOrigStr: string): string;
+
 //대문자 단위로 문자를 반환함
 function StrTokenUpcase(var S: String): string;
 function PosUpcase(const S: String): integer;
@@ -539,6 +544,12 @@ begin
   Result := replaceString(AStr, ' ', '');
 end;
 
+function RemoveSpace2String(S: String): string;
+begin
+  S := Trim(S);
+  Result := RemoveSpaceBetweenStrings(S);
+end;
+
 function RemoveNumbersBetweenString(const aString: string): string;
 var
   C: Char;
@@ -571,6 +582,41 @@ begin
     end;
 
   SetLength(Result, LActualLength);
+end;
+
+procedure SplitLettersAndNumbers(AStr: string; out ALetters: string; out ANumbers: string);
+var
+  i: integer;
+begin
+  AStr := RemoveSpace2String(AStr);
+
+  for i := 1 to Length(AStr) do
+  begin
+    if CharInSet(AStr[i], ['0'..'9']) then
+      ANumbers := ANumbers + AStr[i]
+    else
+      ALetters := ALetters + AStr[i];
+  end;
+end;
+
+function GetLast3OfLetters(const AStr: string): string;
+begin
+  if Length(AStr) >= 4 then
+    Result := Copy(AStr, Length(AStr)-2, 3)
+  else
+    Result := AStr;
+end;
+
+function GetSubStringAfter(const ASubStr, AOrigStr: string): string;
+var
+  LPosSub: integer;
+begin
+  LPosSub := Pos(ASubStr, AOrigStr);
+
+  if LPosSub > 0 then
+    Result := Copy(AOrigStr, LPosSub + Length(ASubStr), MaxInt)
+  else
+    Result := '';
 end;
 
 function StrTokenUpcase(var S: String): string;
