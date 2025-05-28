@@ -25,6 +25,8 @@ procedure SetWindowPos_JH(AHandle: THandle);
 procedure MakeTransparentForm(AForm: TForm; AAlpha: integer);
 procedure WindowShake(wHandle: THandle) ;
 
+function CreateNShowFormByClassName(const AFormClassName: string): TForm;
+
 //아래 함수는 UnitMouseUtil.pas로 이동함
 //function GetComponentUnderMouseCursor(AAllowDisabled: Boolean=True; AAllowWinControl: Boolean=True): TControl;
 
@@ -319,6 +321,21 @@ begin
 
   //return to start position
   MoveWindow(wHandle, oRect.Left,oRect.Top,oRect.Right - oRect.Left,oRect.Bottom - oRect.Top,true) ;
+end;
+
+//사용예: CreateNShowFormByClassName(TForm1);
+function CreateNShowFormByClassName(const AFormClassName: string): TForm;
+var
+  LPersistentClass: TPersistentClass;
+begin
+  Result := nil;
+  LPersistentClass <> nil then
+  begin
+    Result := TFormClass(LPersistentClass).Create(Application);
+    Result.Show;
+  end
+  else
+    raise Exception.Create('FormClass : %s not found', [AFormClassName]);
 end;
 
 end.
