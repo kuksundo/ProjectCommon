@@ -329,13 +329,13 @@ var
   LPersistentClass: TPersistentClass;
 begin
   Result := nil;
-  LPersistentClass <> nil then
+  if LPersistentClass <> nil then
   begin
     Result := TFormClass(LPersistentClass).Create(Application);
     Result.Show;
   end
   else
-    raise Exception.Create('FormClass : %s not found', [AFormClassName]);
+    raise Exception.CreateFmt('FormClass : %s not found', [AFormClassName]);
 end;
 
 end.

@@ -34,6 +34,32 @@ function GetLastRowNumFromExcel(AWorksheet: OleVariant): integer;
 function GetLastColNumFromExcel(AWorksheet: OleVariant): integer;
 procedure SetExcelCellRangeBorder(ARange: ExcelRange);
 procedure SetExcelCellRangeBorderOle(ARange: variant);
+//APosition:
+//  xlInsideHorizontal = $0000000C;
+//  xlInsideVertical = $0000000B;
+//  xlDiagonalDown = $00000005;
+//  xlDiagonalUp = $00000006;
+//  xlEdgeBottom = $00000009;
+//  xlEdgeLeft = $00000007;
+//  xlEdgeRight = $0000000A;
+//  xlEdgeTop = $00000008;
+
+//ALineStyle:
+//  xlContinuous = $00000001;
+//  xlDash = $FFFFEFED;
+//  xlDashDot = $00000004;
+//  xlDashDotDot = $00000005;
+//  xlDot = $FFFFEFEA;
+//  xlDouble = $FFFFEFE9;
+//  xlSlantDashDot = $0000000D;
+//  xlLineStyleNone = $FFFFEFD2;
+
+//AWeight
+//  xlHairline = $00000001;
+//  xlMedium = $FFFFEFD6;
+//  xlThick = $00000004;
+//  xlThin = $00000002;
+procedure SetExcelCellRangeSingleBorder(ARange: OleVariant; const APosition, ALineStyle, AWeight: integer);
 function GetExcelVersion(XLApp :TExcelApplication): string;
 function XlsInit(AVisible: boolean): ExcelApplication;
 procedure XlsFinal(var AExcelApp: ExcelApplication);
@@ -65,6 +91,10 @@ function XlsRowCopyNInsert2WS(AWorksheet: OleVariant; ASrcRow, ADestRow: integer
 function ReadExcelRangeToVarArrayFromWorkSheet(AWorksheet: OleVariant; RangeStr: string): Variant;
 //Range가 병합된 Ragnge이면 실제 데이터가 있는 Range를 반환 함
 function GetTopRangeOfMergedRange(ARange: OleVariant): OleVariant;
+//Range에서 열(알파벳)과 행(숫자)을 분리하는 함수
+procedure SplitExcelRange(const ARangeStr: string; out AColPart, ARowPart: string);
+//Cell의 값이 AMatchStr가 일치하는 경우 Cell의 Row를 반환
+function GetRowidxByCellValueFromWS(AWorkSheet: OleVariant; const AMatchStr: string; const AStartSearchRow: integer = -1): integer;
 
 implementation
 
@@ -388,7 +418,7 @@ end;
 function GetJsonAryFromExcelSheet(AExcelSheet: OleVariant;
   AHeaderStartCol, AHeaderStartRow, ADataStartCol, ADataStartRow: string; ASkipBlank: Boolean): string;
 var
-  LCol, LRow, LLastRow, LLastColumn, LStartCol, LStartRow: integer;
+  LCol, LRow, LLastRow, LLastColumn, LStartCol, LStartRow, i: integer;
   LColList: TStringList;
   LJsonAry, LColChar, LCellData: string;
   LList: IDocList;
@@ -403,9 +433,10 @@ begin
   LColList := TStringList.Create;
   try
     LLastRow := GetLastRowNumFromExcel(AExcelSheet);
-//    LLastColumn := GetLastColNumFromExcel(AExcelSheet);
+    //LColList = 'Col Caption=Col Index' 형식으로 반환 됨
     LLastColumn := GetColumnListFromExcelSheet(AExcelSheet, LColList, AHeaderStartCol, AHeaderStartRow, ASkipBlank);
-    LJsonAry := GetJsonAryFromStringList(LColList);
+    //True = LCollList 에서 Name[]을 LJsonAry에 반환함, Value[]는 엑셀 Column Index임 - Column이 공란인 경우 Index도 skip 됨
+    LJsonAry := GetJsonAryFromStringList(LColList, True);
     LList.Append(StringToUtf8(LJsonAry));
 
     LStartRow := StrToIntDef(ADataStartRow, 0);
@@ -415,8 +446,15 @@ begin
       LColChar := ADataStartCol;//'A';
       TArray.Clear<string>(LAry);
 
-      for LCol := LStartCol to LLastColumn do
+//      for LCol := LStartCol to LLastColumn do
+      for i := 0 to LColList.Count - 1 do
       begin
+        LCol := StrToIntDef(LColList.ValueFromIndex[i], -1);
+
+        if LCol = -1 then
+          Continue;
+
+        LColChar := GetExcelColumnAlphabetByInt(LCol);
         LRange := AExcelSheet.Range[LColChar+IntToStr(LRow)];
         LCellData := LRange.Value;
 
@@ -424,10 +462,10 @@ begin
         if (LCol = LStartCol) and (LCellData = '') then
           Break;
 
-        LColChar := GetIncXLColumn(LColChar);
+//        LColChar := GetIncXLColumn(LColChar);
 
-        if ASkipBlank and (LCellData = '') then
-          Continue;
+//        if ASkipBlank and (LCellData = '') then
+//          Continue;
 
         TArray.Add<string>(LAry, LCellData);
       end;
@@ -458,12 +496,15 @@ begin
     //첫번째 행(AStartRow)에 Column Name이 존재 해야 함
     LRange := AExcelSheet.range[LColChar+AStartRow];//'1'
     LRange := GetTopRangeOfMergedRange(LRange);
-    LColName := LRange.Value;
 
     LColChar := GetIncXLColumn(LColChar);
 
-    if ASkipBlank and (LColName = '') then
+    if ASkipBlank and (LRange.Value = '') then
       Continue;
+
+    //ColName이 공란인 경우 skip한 것을 확인하기 위해 value[]에 col index를 기록함
+    //Cell Data를 리스트로 가져올 때 사용함
+    LColName := LRange.Value + '=' + IntToStr(Li);
 
     AList.Add(LColName);
   end;
@@ -880,7 +921,8 @@ end;
 
 function GetLastColNumFromExcel(AWorksheet: OleVariant): integer;
 begin
-  Result := AWorkSheet.Cells.SpecialCells(xlCellTypeLastCell, EmptyParam).Column;
+//  Result := AWorkSheet.Cells.SpecialCells(xlCellTypeLastCell, EmptyParam).Column;
+  Result := AWorkSheet.UsedRange.Columns.Count;
 end;
 
 procedure SetExcelCellRangeBorder(ARange: ExcelRange);
@@ -912,6 +954,12 @@ begin
   ARange.Borders.Weight := xlThin;
 
 //  ARange.BorderAround(xlContinuous, xlThin,1, clFuchsia);
+end;
+
+procedure SetExcelCellRangeSingleBorder(ARange: OleVariant; const APosition, ALineStyle, AWeight: integer);
+begin
+  ARange.Borders[Aposition].LineStyle := ALineStyle;
+  ARange.Borders[Aposition].Weight := AWeight;
 end;
 
 function GetExcelVersion(XLApp :TExcelApplication): string;
@@ -1273,6 +1321,58 @@ begin
     // 병합된 경우: MergeArea의 좌상단 셀 반환
     MergeArea := ARange.MergeArea;
     Result := MergeArea.Cells[1, 1];
+  end;
+end;
+
+procedure SplitExcelRange(const ARangeStr: string; out AColPart, ARowPart: string);
+var
+  i: integer;
+begin
+  AColPart := '';
+  ARowPart := '';
+
+  for i := 1 to Length(ARangeStr) do
+  begin
+    if ARangeStr[i] in ['0'..'9'] then
+    begin
+      ARowPart := Copy(ARangeStr, i, Maxint);
+      AColPart := Copy(ARangeStr, 1, i-1);
+      Exit;
+    end;
+  end;
+
+  //숫자가 없는 경우 전체를 AColPart로 변환
+  AColPart := ARangeStr;
+end;
+
+function GetRowidxByCellValueFromWS(AWorkSheet: OleVariant; const AMatchStr: string;
+  const AStartSearchRow: integer): integer;
+var
+  LRowCount, LColCount, LRow, LCol: integer;
+  LCellValue: string;
+begin
+  Result := -1;
+
+  //UsedRange를 기준으로 행/열 개수 파악
+  if AStartSearchRow = -1 then
+    LRowCount := AWorkSheet.UsedRange.Rows.Count
+  else
+    LRowCount := AStartSearchRow;
+
+  LColCount := AWorkSheet.UsedRange.Columns.Count;
+
+  for LRow := 1 to LRowCount do
+  begin
+    for LCol := 1 to LColCount do
+    begin
+      LCellValue := AWorkSheet.Cells[LRow, LCol].Value;
+
+      if VarIsStr(LCellValue) and (Trim(LCellValue) = AMatchStr) then
+      begin
+        Result := LRow;
+        Exit; //처음 발견된 Row만 반환
+      end;
+    end;
   end;
 end;
 

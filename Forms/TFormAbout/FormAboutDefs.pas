@@ -1,6 +1,6 @@
 //********************************************************************************************************************************
 //*                                                                                                                              *
-//*     TFormAbout 1.2 © 3delite 2006-2008                                                                                       *
+//*     TFormAbout 1.2 ?3delite 2006-2008                                                                                       *
 //*     See TFormAbout.txt for details                                                                                           *
 //*                                                                                                                              *
 //* Two licenses are available if you like this component:                                                                       *
@@ -213,11 +213,11 @@ begin
     Result := False;
     if NOT Assigned(FormAbout)
         then FormAbout := TFormAboutBox.Create(Self);
-    try
-        NewVerStr := FormAbout.IdHTTPVersion.Get(fURLVersionFile);
-    except
-        //*
-    end;
+//    try
+//        NewVerStr := FormAbout.IdHTTPVersion.Get(fURLVersionFile);
+//    except
+//        //*
+//    end;
     if IsNewerVersion(GetFileVersionStr(Application.ExeName), NewVerStr) then begin
         Result := True;
     end else begin
@@ -233,11 +233,11 @@ begin
         then FormAbout := TFormAboutBox.Create(Self);
     Result := IsNewerVersionAvailable;
     Ver := GetFileVersionStr(Application.ExeName);
-    try
-        NewVer := FormAbout.IdHTTPVersion.Get(fURLVersionFile);
-    except
-        //*
-    end;
+//    try
+//        NewVer := FormAbout.IdHTTPVersion.Get(fURLVersionFile);
+//    except
+//        //*
+//    end;
     if Result then begin
         if MessageDlg('Newer version available!'
             + (#13#10) + 'Current version: ' + Ver

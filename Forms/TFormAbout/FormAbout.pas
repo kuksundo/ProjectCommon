@@ -19,8 +19,8 @@ unit FormAbout;
 
 interface
 
-uses Windows, Classes, Graphics, Forms, Controls, StdCtrls, {Buttons,} ExtCtrls, jpeg, ShellApi, {Inifiles,} SysUtils, Helper3delite,
-  IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP;
+uses Windows, Classes, Graphics, Forms, Controls, StdCtrls, {Buttons,} ExtCtrls, jpeg, ShellApi, {Inifiles,} SysUtils, Helper3delite;
+//  IdBaseComponent, IdComponent, IdTCPConnection, IdTCPClient, IdHTTP;
 
 const
   STR_REGISTERED        = 'Registered for %s';
@@ -47,7 +47,6 @@ type
     LabelProgramName: TLabel;
     LabelProgramNameShadow: TLabel;
     Panel1: TPanel;
-    IdHTTPVersion: TIdHTTP;
     procedure LabelHomePageClick(Sender: TObject);
     procedure LabelEmailClick(Sender: TObject);
     procedure LabelAdditional1Click(Sender: TObject);
