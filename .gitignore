@@ -1,5 +1,6 @@
 __history/
 Win32/
+Win64/
 Debug/
 *.bpl
 *.dcu
