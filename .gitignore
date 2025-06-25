@@ -14,5 +14,9 @@ Debug/
 *.iif
 *.irf2
 *.rsm
+*.xls
+*.xlsx
+*.xlsm
+*.ods
 .gitignore
 UnitRttiUtil_.pas
